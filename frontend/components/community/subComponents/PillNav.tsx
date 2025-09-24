@@ -7,7 +7,7 @@ import { IconSearch, IconHelpCircle, IconPlus } from "@tabler/icons-react";
 export interface PillNavProps {
   logo: string;
   logoAlt?: string;
-  handleCommunities?: (communities: any[]) => void;
+  handleCommunities?: (searchInput: string) => void;
   handleModelOpen?: () => void;
 }
 
@@ -35,14 +35,14 @@ const CreateCommunityButton: React.FC<CreateCommunityButtonProps> = ({
 const SearchComponent = ({
   handleCommunities,
 }: {
-  handleCommunities?: (communities: any[]) => void;
+  handleCommunities?: (searchInput: string) => void;
 }) => {
   const [searchInput, setSearchInput] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Searching for:", searchInput);
-    handleCommunities?.([]);
+    handleCommunities?.(searchInput);
   };
 
   return (

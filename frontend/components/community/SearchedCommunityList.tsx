@@ -1,52 +1,26 @@
 "use client";
-import React, { useState } from "react";
-import { BorderBeam } from "../ui/border-beam";
+
+import { useState } from "react";
 import CommunityList from "./subComponents/CommunityList";
-import CommunityDetail from "./subComponents/CommunityDetail";
+import CommunityDetail from "./subComponents/communityDetail/CommunityDetail";
+import { Server } from "@/types/server";
+import { BorderBeam } from "../ui/border-beam";
 
-type ChannelType = "text" | "voice" | "video";
-type Channel = {
-  name: string;
-  type: ChannelType;
-  active: boolean;
-};
-export type Community = {
-  id: string;
-  name: string;
-  description: string;
-  memberCount: number;
-  channels: Channel[];
-};
+interface SearchedCommunityListProps {
+  communities: Server[];
+}
 
-const mockCommunities: Community[] = [
-  {
-    id: "1",
-    name: "Design & Develop",
-    description: "A hub for creatives to share, learn, and grow together.",
-    memberCount: 138,
-    channels: [
-      { name: "general-chat", type: "text", active: false },
-      { name: "design-critique", type: "text", active: false },
-    ],
-  },
-  {
-    id: "2",
-    name: "Gaming Central",
-    description: "Discuss the latest and greatest in the world of gaming.",
-    memberCount: 842,
-    channels: [
-      { name: "news-and-updates", type: "text", active: false },
-      { name: "squad-up-lobby", type: "voice", active: false },
-    ],
-  },
-];
-
-export default function SearchedCommunityList() {
-  const [allCommunities] = useState<Community[]>(mockCommunities);
-
-  const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(
-    mockCommunities[0]
+export default function SearchedCommunityList({
+  communities,
+}: SearchedCommunityListProps) {
+  const [selectedCommunity, setSelectedCommunity] = useState<Server | null>(
+    null
   );
+
+  const handleSelectedCommunity = (server: Server) => {
+    if (selectedCommunity?._id === server._id) setSelectedCommunity(null);
+    else setSelectedCommunity(server);
+  };
 
   return (
     <div className="flex h-full flex-col items-center justify-center">
@@ -56,9 +30,9 @@ export default function SearchedCommunityList() {
             Communities
           </h1>
           <CommunityList
-            communities={allCommunities}
-            onSelectCommunity={setSelectedCommunity}
-            selectedCommunityId={selectedCommunity?.id}
+            communities={communities}
+            onSelectCommunity={handleSelectedCommunity}
+            selectedCommunityId={selectedCommunity?._id}
           />
         </div>
 
@@ -67,7 +41,9 @@ export default function SearchedCommunityList() {
         </div>
 
         <div className="relative w-2/3 backdrop-blur-md dark:bg-neutral-900/60 ">
-          <CommunityDetail selectedCommunity={selectedCommunity} />
+          <CommunityDetail
+            selectedCommunityId={selectedCommunity?._id || null}
+          />
         </div>
       </div>
     </div>

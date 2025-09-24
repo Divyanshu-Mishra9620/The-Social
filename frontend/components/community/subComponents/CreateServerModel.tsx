@@ -1,7 +1,9 @@
 "use client";
-import React, { useState, useRef, ChangeEvent, FormEvent } from "react";
+import React, { useState, useRef, ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconCamera, IconX } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
+import { useCreateServer } from "@/hooks/useCreateServer";
 
 export interface CreateServerModelProps {
   isOpen: boolean;
@@ -12,7 +14,10 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { data: session } = useSession();
+  const { createServer, isCreating, error } = useCreateServer();
   const [serverName, setServerName] = useState("");
+  const [description, setDescription] = useState("");
   const [serverImage, setServerImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,27 +35,30 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
     fileInputRef.current?.click();
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!serverName.trim()) {
-      alert("Please provide a server name.");
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!session?.appJwt) {
+      alert("You must be logged in to create a server.");
       return;
     }
-
     const formData = new FormData();
     formData.append("name", serverName);
     if (serverImage) {
-      formData.append("profilePic", serverImage);
+      formData.append("imageFile", serverImage);
     }
+    if (description) formData.append("description", description);
 
-    console.log("Submitting form data:", {
-      name: serverName,
-      file: serverImage?.name,
-    });
-
-    // Here you would make your API call, e.g., fetch('/api/servers', { method: 'POST', body: formData });
-
-    onClose(); // Close the modal after submission
+    try {
+      const newServer = await createServer({
+        formData,
+        accessToken: session.appJwt,
+      });
+      alert(`Server created successfully! ID: ${newServer.server._id}`);
+      onClose();
+    } catch (err) {
+      console.error("Failed to create server:", err);
+    }
   };
 
   return (
@@ -86,7 +94,7 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+            <form onSubmit={(e) => handleSubmit(e)} className="mt-8 space-y-6">
               <div className="flex justify-center">
                 <input
                   type="file"
@@ -126,11 +134,31 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
                 </label>
                 <input
                   id="serverName"
+                  name="serverName"
                   type="text"
                   value={serverName}
                   onChange={(e) => setServerName(e.target.value)}
                   placeholder="Enter a server name"
                   maxLength={100}
+                  required
+                  className="w-full rounded-md border border-neutral-300 bg-transparent px-4 py-2.5 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:text-neutral-200 dark:focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                >
+                  DESCRIPTION
+                </label>
+                <input
+                  id="description"
+                  name="description"
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Write the description for your server"
+                  maxLength={250}
                   required
                   className="w-full rounded-md border border-neutral-300 bg-transparent px-4 py-2.5 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:text-neutral-200 dark:focus:ring-blue-600"
                 />

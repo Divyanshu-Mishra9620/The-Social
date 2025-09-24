@@ -1,37 +1,88 @@
-import NextAuth, { NextAuthOptions, User } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
+import { encode, JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import jwt from "jsonwebtoken";
+import { User } from "next-auth";
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string;
-const BACKEND_URI: string = process.env.NEXT_PUBLIC_BACKEND_URI || "";
+import { z } from "zod";
 
-interface BackendUser {
-  _id: string;
-  name?: string;
-  email: string;
-  role?: string;
-  profilePic?: string;
-  emailVerified?: boolean;
-}
+const envSchema = z.object({
+  GOOGLE_CLIENT_ID: z.string().min(1),
+  GOOGLE_CLIENT_SECRET: z.string().min(1),
+  NEXT_PUBLIC_BACKEND_URI: z.string().url().min(1),
+  NEXTAUTH_SECRET: z.string().min(1),
+});
+
+const env = envSchema.parse(process.env);
+
+const backendApiService = {
+  async authenticateWithCredentials(credentials: Record<string, string>) {
+    const res = await fetch(
+      `${env.NEXT_PUBLIC_BACKEND_URI}/api/v1/auth/login`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Authentication failed");
+    }
+    return data.user;
+  },
+  async findOrCreateUserByProvider(
+    profile: any,
+    provider: string,
+    existingUserId?: string
+  ) {
+    const endpoint = existingUserId
+      ? "/api/v1/auth/link-provider"
+      : "/api/v1/auth/provider-login";
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URI}${endpoint}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: profile.email,
+          name: profile.name,
+          profilePic: profile.picture,
+          provider,
+          providerAccountId: profile.sub,
+          userId: existingUserId,
+        }),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok) {
+      if (res.status === 409 && data.code === "ACCOUNT_EXISTS_WITH_PASSWORD") {
+        throw new Error("ACCOUNT_EXISTS_WITH_PASSWORD");
+      }
+      throw new Error(data.message || "Provider sign-in failed");
+    }
+    return data.user;
+  },
+};
 
 const loginAttempts = new Map<string, { count: number; timestamp: number }>();
+const MAX_ATTEMPTS = 5;
+const TIME_WINDOW_MS = 15 * 60 * 1000;
 
 const isRateLimited = (email: string): boolean => {
-  const attempts = loginAttempts.get(email) || {
-    count: 0,
-    timestamp: Date.now(),
-  };
-  const timeWindow = 15 * 60 * 1000;
-  if (Date.now() - attempts.timestamp > timeWindow) {
-    loginAttempts.set(email, { count: 1, timestamp: Date.now() });
+  const record = loginAttempts.get(email);
+  const now = Date.now();
+  if (!record || now - record.timestamp > TIME_WINDOW_MS) {
+    loginAttempts.set(email, { count: 1, timestamp: now });
     return false;
   }
-
-  if (attempts.count >= 5) return true;
-
-  attempts.count++;
-  loginAttempts.set(email, attempts);
+  if (record.count >= MAX_ATTEMPTS) {
+    return true;
+  }
+  record.count++;
+  loginAttempts.set(email, record);
   return false;
 };
 
@@ -39,105 +90,90 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
-    updateAge: 24 * 60 * 60,
   },
   providers: [
     GoogleProvider({
-      clientId: GOOGLE_CLIENT_ID,
-      clientSecret: GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "select_account",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
     }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-          placeholder: "Enter your email",
-        },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
 
-      async authorize(credentials): Promise<User | null> {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
-        }
-
-        if (isRateLimited(credentials.email)) {
-          throw new Error("Too many login attempts. Please try again later.");
-        }
+      async authorize(
+        credentials: Record<"email" | "password", string> | undefined,
+        req: any
+      ): Promise<User | null> {
+        if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const res = await fetch(`${BACKEND_URI}/api/auth/check-user`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
+          const user = await backendApiService.authenticateWithCredentials(
+            credentials
+          );
 
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.message || "Authentication failed");
-          }
-
-          const user: BackendUser = data.user;
-          if (!user?._id) {
-            throw new Error("Invalid user data received");
-          }
-
-          loginAttempts.delete(credentials.email);
+          if (!user?._id) return null;
 
           return {
-            id: user._id,
-            name: user.name || "User",
+            id: user._id.toString(),
+            name: user.name,
             email: user.email,
             image: user.profilePic,
-            role: user.role || "user",
-            emailVerified: user.emailVerified || false,
+            role: user.role,
+            emailVerified: user.emailVerified,
           };
-        } catch (error) {
-          console.error("Authorization error:", error);
-          throw new Error(error.message || "Authentication failed");
+        } catch (error: any) {
+          console.error("Authorization Error:", error.message);
+          throw new Error(error.message);
         }
       },
     }),
   ],
   callbacks: {
-    async signIn({ account, profile }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
-        const googleProfile = profile as { email_verified?: boolean };
-        return googleProfile.email_verified || false;
+        try {
+          const backendUser =
+            await backendApiService.findOrCreateUserByProvider(
+              profile,
+              "google"
+            );
+          user.id = backendUser._id;
+          user.role = backendUser.role;
+        } catch (error: any) {
+          if (error.message === "ACCOUNT_EXISTS_WITH_PASSWORD") {
+            throw new Error(
+              `To connect your Google account, please sign in with your password first.&error_code=${error.message}`
+            );
+          }
+          console.error("Google signIn callback error:", error);
+          return false;
+        }
       }
       return true;
     },
-    async jwt({ token, user, account }) {
-      if (user) {
+    async jwt({ token, user }) {
+      if (user && user.id && user.email) {
         token.id = user.id;
+        token.email = user.email;
         token.role = user.role;
-        token.emailVerified = user.emailVerified;
-      }
-      if (account) {
-        token.provider = account.provider;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.provider = token.provider;
-        session.user.emailVerified = token.emailVerified;
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        const payload = {
+          id: token.id,
+          email: token.email,
+          role: token.role,
+        };
+        session.appJwt = jwt.sign(payload, env.NEXTAUTH_SECRET, {
+          expiresIn: "30d",
+        });
       }
       return session;
     },
@@ -146,8 +182,8 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
+  secret: env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === "development",
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

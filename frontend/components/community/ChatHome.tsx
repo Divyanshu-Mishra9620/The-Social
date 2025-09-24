@@ -1,9 +1,13 @@
 "use client";
+
+import { useState } from "react";
 import { CommunitySidebar } from "./Sidebar";
 import SearchedCommunityList from "./SearchedCommunityList";
 import PillNav from "./subComponents/PillNav";
 import { FloatingDock } from "@/components/ui/floating-dock";
 import Orb from "./subComponents/Orb";
+import CreateServerModel from "./subComponents/CreateServerModel";
+import { useServerSearch } from "@/hooks/useServerSearch";
 import {
   IconBrandGithub,
   IconBrandX,
@@ -12,34 +16,19 @@ import {
   IconNewSection,
   IconTerminal2,
 } from "@tabler/icons-react";
-import { useState } from "react";
-import CreateServerModel from "./subComponents/CreateServerModel";
-
-export type ChannelType = "text" | "voice" | "video";
-export type Channel = {
-  name: string;
-  type: ChannelType;
-  active: boolean;
-};
-export type Community = {
-  id: string;
-  name: string;
-  description: string;
-  memberCount: number;
-  channels: Channel[];
-};
 
 export default function ChatHome() {
-  const [communities, setCommunities] = useState<Community[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [modelOpen, setModelOpen] = useState(false);
 
-  const handleCommunities = (newCommunities: Community[]) => {
-    setCommunities(newCommunities);
+  const { communities, isLoading, error } = useServerSearch(searchTerm);
+
+  const handleSearch = (searchInput: string) => {
+    setSearchTerm(searchInput);
   };
 
   const handleModelOpen = () => {
     setModelOpen(!modelOpen);
-    console.log(modelOpen);
   };
 
   const links = [
@@ -98,6 +87,7 @@ export default function ChatHome() {
       href: "#",
     },
   ];
+
   return (
     <div className="relative flex h-screen flex-col overflow-hidden">
       <div className="absolute inset-0 z-[-2]">
@@ -116,7 +106,7 @@ export default function ChatHome() {
         <PillNav
           logo="./globe.svg"
           logoAlt="Company Logo"
-          handleCommunities={handleCommunities}
+          handleCommunities={handleSearch}
           handleModelOpen={handleModelOpen}
         />
       </header>
@@ -129,7 +119,11 @@ export default function ChatHome() {
         </div>
 
         <main className="relative flex-1">
-          <SearchedCommunityList />
+          {isLoading && <p>Loading communities...</p>}
+          {error && <p>Failed to load communities.</p>}
+          {!isLoading && !error && (
+            <SearchedCommunityList communities={communities} />
+          )}
         </main>
 
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 md:hidden">
