@@ -4,6 +4,8 @@ export interface Channel {
   _id: string;
   name: string;
   type: ChannelType;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Category {
@@ -32,6 +34,17 @@ export interface Server {
   owner: PopulatedUser;
   members: ServerMember[];
   categories: Category[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  _id: string;
+  content: string;
+  sender: PopulatedUser;
+  channel: string;
+  edited: boolean;
+  attachments: string[];
   createdAt: string;
   updatedAt: string;
 }

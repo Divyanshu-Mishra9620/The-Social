@@ -23,8 +23,9 @@ export default function SearchedCommunityList({
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-center">
-      <div className="relative flex h-[95%] w-[95%] overflow-hidden rounded-2xl border border-black/[0.1] dark:border-white/[0.1]">
+    <div className="flex h-full flex-col items-center justify-center min-h-0">
+      {" "}
+      <div className="relative flex h-[95%] w-[95%] overflow-hidden rounded-2xl border border-black/[0.1] dark:border-white/[0.1] min-h-0">
         <div className="relative w-1/3 p-6 backdrop-blur-md dark:bg-neutral-900/60">
           <h1 className="mb-4 text-2xl font-semibold text-neutral-800 dark:text-neutral-100">
             Communities

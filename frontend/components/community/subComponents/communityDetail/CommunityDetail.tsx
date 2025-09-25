@@ -10,7 +10,6 @@ const LoadingState = () => (
     <p className="text-neutral-500">Loading Community...</p>
   </div>
 );
-
 const EmptyState = () => (
   <div className="flex h-full items-center justify-center">
     <div className="text-center">
@@ -26,7 +25,6 @@ const EmptyState = () => (
     </div>
   </div>
 );
-
 export default function CommunityDetail({
   selectedCommunityId,
 }: {
@@ -35,24 +33,19 @@ export default function CommunityDetail({
   const { server, isLoading, error } = useServerDetails(selectedCommunityId);
 
   const renderContent = () => {
-    if (!selectedCommunityId) {
-      return <EmptyState />;
-    }
-    if (isLoading) {
-      return <LoadingState />;
-    }
-    if (error || !server) {
+    if (!selectedCommunityId) return <EmptyState />;
+    if (isLoading) return <LoadingState />;
+    if (error || !server)
       return (
         <p className="p-4 text-center text-red-500">
           Failed to load community details.
         </p>
       );
-    }
     return <CommunityView community={server} />;
   };
 
   return (
-    <div className="h-screen w-full overflow-hidden bg-transparent">
+    <div className="h-full w-full overflow-hidden bg-transparent">
       <main className="h-full w-full">{renderContent()}</main>
     </div>
   );
