@@ -24,7 +24,8 @@ const MessageBubble = ({
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.2, ease: "easeOut" }}
+    exit={{ opacity: 0, y: -10 }}
+    layout
     className={`flex items-start gap-3 ${
       isOwnMessage ? "flex-row-reverse" : ""
     }`}
@@ -32,29 +33,29 @@ const MessageBubble = ({
     <img
       src={message.sender.profilePic || "/default-avatar.png"}
       alt={message.sender.name}
-      className="h-10 w-10 rounded-full object-cover"
+      className="h-9 w-9 rounded-full object-cover"
     />
     <div
       className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}
     >
       <div className="flex items-center gap-2">
         {!isOwnMessage && (
-          <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+          <span className="text-sm font-semibold text-neutral-200">
             {message.sender.name}
           </span>
         )}
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">
+        <span className="text-xs text-neutral-500">
           {formatDate(message.createdAt)}
         </span>
       </div>
       <div
-        className={`mt-1 max-w-lg rounded-xl px-4 py-2 break-words ${
+        className={`mt-1 max-w-lg rounded-xl px-4 py-2.5 text-sm break-words ${
           isOwnMessage
-            ? "rounded-br-none bg-blue-600 text-white"
-            : "rounded-bl-none bg-neutral-200 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100"
+            ? "rounded-br-none bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+            : "rounded-bl-none bg-neutral-800 text-neutral-200"
         }`}
       >
-        <p className="text-sm">{message.content}</p>
+        <p>{message.content}</p>
       </div>
     </div>
   </motion.div>
@@ -77,19 +78,18 @@ export const ChatView = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (initialMessages && initialMessages.length > 0) {
-      const sorted = [...initialMessages].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    if (initialMessages) {
+      setMessages(
+        [...initialMessages].sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
       );
-      setMessages(sorted);
     }
   }, [initialMessages]);
 
   useEffect(() => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
@@ -112,6 +112,7 @@ export const ChatView = ({
     if (!newMessage.trim() || !session?.appJwt) return;
     const contentToSend = newMessage;
     setNewMessage("");
+
     try {
       const formData = new FormData();
       formData.append("content", contentToSend);
@@ -123,33 +124,31 @@ export const ChatView = ({
       );
     } catch (error) {
       console.error("Failed to send message:", error);
-      setNewMessage(contentToSend);
+      setNewMessage(contentToSend); // Restore message on failure
     }
   };
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-neutral-900">
-      <div className="flex-1 overflow-y-auto px-4 py-6 min-h-0">
+    <div className="relative flex h-full flex-col">
+      <div className="flex-1 overflow-y-auto px-6 py-4">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
-            <IconLoader2 size={32} className="animate-spin text-neutral-500" />
+            <IconLoader2 size={32} className="animate-spin text-neutral-400" />
           </div>
         ) : (
           <div className="space-y-6">
-            {messages.length === 0 && (
-              <div className="flex h-full flex-col items-center justify-center text-center">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-800">
-                  <IconHash size={40} className="text-neutral-500" />
-                </div>
-                <h2 className="mt-4 text-xl font-bold text-neutral-800 dark:text-neutral-100">
-                  Welcome to #{channel.name}!
-                </h2>
-                <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                  Be the first to say something.
-                </p>
+            <div className="text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/20 border border-white/10">
+                <IconHash size={32} className="text-neutral-400" />
               </div>
-            )}
-            <AnimatePresence>
+              <h2 className="mt-4 text-2xl font-bold text-white">
+                Welcome to #{channel.name}!
+              </h2>
+              <p className="mt-1 text-sm text-neutral-400">
+                This is the beginning of this channel.
+              </p>
+            </div>
+            <AnimatePresence initial={false}>
               {messages.map((message) => (
                 <MessageBubble
                   key={message._id}
@@ -162,28 +161,28 @@ export const ChatView = ({
           </div>
         )}
       </div>
-      <div className="shrink-0 border-t border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="shrink-0 p-4">
         <form
           onSubmit={handleSendMessage}
-          className="flex items-center gap-3 rounded-xl bg-neutral-100 px-3 py-2 dark:bg-neutral-800"
+          className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-2 shadow-lg backdrop-blur-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50"
         >
           <button
             type="button"
-            className="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+            className="p-2 text-neutral-400 hover:text-white"
           >
-            <IconPaperclip size={22} />
+            <IconPaperclip size={20} />
           </button>
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message #${channel.name}`}
-            className="flex-1 bg-transparent text-sm text-neutral-800 placeholder:text-neutral-400 focus:outline-none dark:text-neutral-200"
+            className="flex-1 bg-transparent text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none"
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="rounded-md bg-blue-600 p-2 text-white transition hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 p-2 text-white transition hover:bg-blue-700 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed hover:scale-105"
           >
             <IconSend size={18} />
           </button>

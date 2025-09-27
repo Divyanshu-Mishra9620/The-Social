@@ -11,7 +11,7 @@ export const useUserServers = () => {
   const { data: session } = useSession();
 
   const key = session?.appJwt
-    ? [`${BACKEND_URI}/api/v1/profile/servers`, session.appJwt]
+    ? [`${BACKEND_URI}/api/v1/profile/user-servers`, session.appJwt]
     : null;
 
   const { data, error, isLoading, mutate } = useSWR<any>(key, fetcher);

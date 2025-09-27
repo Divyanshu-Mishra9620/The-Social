@@ -32,6 +32,7 @@ export interface Server {
   description?: string;
   imageUrl: string;
   owner: PopulatedUser;
+  visibility: "public" | "private" | "invite-only";
   members: ServerMember[];
   categories: Category[];
   createdAt: string;

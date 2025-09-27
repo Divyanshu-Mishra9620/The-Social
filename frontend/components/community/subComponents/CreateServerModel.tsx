@@ -17,6 +17,7 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
   const { data: session } = useSession();
   const { createServer, isCreating, error } = useCreateServer();
   const [serverName, setServerName] = useState("");
+  const [serverType, setServerType] = useState("public");
   const [description, setDescription] = useState("");
   const [serverImage, setServerImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -48,6 +49,7 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
       formData.append("imageFile", serverImage);
     }
     if (description) formData.append("description", description);
+    formData.append("type", serverType);
 
     try {
       const newServer = await createServer({
@@ -162,6 +164,26 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
                   required
                   className="w-full rounded-md border border-neutral-300 bg-transparent px-4 py-2.5 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:text-neutral-200 dark:focus:ring-blue-600"
                 />
+              </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                >
+                  Community Type
+                </label>
+                <select
+                  id="communityType"
+                  name="communityType"
+                  className="w-full rounded-md border border-neutral-300 bg-transparent px-4 py-2.5 text-neutral-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:text-neutral-200 dark:focus:ring-blue-600"
+                  required
+                  defaultValue="public"
+                  onChange={(e) => setServerType(e.target.value)}
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Private</option>
+                  <option value="protected">Invite Only</option>
+                </select>
               </div>
 
               <button

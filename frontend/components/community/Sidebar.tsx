@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { Sidebar, SidebarBody } from "../ui/sidebar";
+import React, { useState, ReactNode } from "react";
+import { Sidebar as SidebarPrimitive, SidebarBody } from "../ui/sidebar";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -11,6 +11,14 @@ import {
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+type LinkType = {
+  label: string;
+  href: string;
+  icon: ReactNode;
+  active?: boolean;
+};
+
 const SidebarLink = ({
   link,
   isActive,
@@ -19,123 +27,95 @@ const SidebarLink = ({
   link: LinkType;
   isActive: boolean;
   isSidebarOpen: boolean;
-}) => {
-  return (
-    <a
-      href={link.href}
-      className={cn(
-        "group relative flex items-center justify-start gap-2 rounded-lg py-2 px-3 transition-colors duration-200",
-        isActive
-          ? "bg-neutral-200/80 text-neutral-800 dark:bg-neutral-700/50 dark:text-neutral-50"
-          : "text-neutral-600 hover:bg-neutral-200/80 dark:text-neutral-400 dark:hover:bg-neutral-700/50 dark:hover:text-neutral-50"
-      )}
-    >
-      {link.icon}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.span
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2, delay: 0.1 }}
-            className="whitespace-pre text-sm"
-          >
-            {link.label}
-          </motion.span>
-        )}
-      </AnimatePresence>
-
-      {!isSidebarOpen && (
-        <div className="absolute left-full ml-4 hidden scale-0 rounded-md bg-neutral-800 px-2 py-1 text-xs text-white transition-transform duration-150 ease-in-out group-hover:scale-100 dark:bg-neutral-700 md:block">
+}) => (
+  <a
+    href={link.href}
+    className={cn(
+      "group relative flex items-center justify-start gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200",
+      isActive
+        ? "bg-black/5 text-neutral-700 dark:bg-white/10 dark:text-neutral-50"
+        : "text-neutral-500 hover:bg-black/5 hover:text-neutral-700 dark:text-neutral-400 dark:hover:bg-white/5 dark:hover:text-neutral-50"
+    )}
+  >
+    {link.icon}
+    <AnimatePresence>
+      {isSidebarOpen && (
+        <motion.span
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
+          transition={{ duration: 0.2 }}
+          className="whitespace-pre"
+        >
           {link.label}
-        </div>
+        </motion.span>
       )}
-    </a>
-  );
-};
+    </AnimatePresence>
+  </a>
+);
 
 export function CommunitySidebar() {
   const links = [
     {
       label: "Dashboard",
       href: "#",
-      icon: <IconBrandTabler className="h-5 w-5 shrink-0" />,
+      icon: <IconBrandTabler className="h-5 w-5" />,
       active: true,
     },
-    {
-      label: "Profile",
-      href: "#",
-      icon: <IconUserBolt className="h-5 w-5 shrink-0" />,
-      active: false,
-    },
+    { label: "Profile", href: "#", icon: <IconUserBolt className="h-5 w-5" /> },
     {
       label: "Settings",
       href: "#",
-      icon: <IconSettings className="h-5 w-5 shrink-0" />,
-      active: false,
+      icon: <IconSettings className="h-5 w-5" />,
     },
   ];
 
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-
   const isSidebarOpen = isPinned || isHovered;
 
-  const handleMouseEnter = () => setIsHovered(true);
-  const handleMouseLeave = () => setIsHovered(false);
-  const togglePin = () => setIsPinned((prev) => !prev);
-
   return (
-    <Sidebar open={isSidebarOpen} setOpen={() => {}}>
+    <SidebarPrimitive
+      open={isSidebarOpen}
+      setOpen={() => {}}
+      className="rounded-2xl border border-black/10 bg-white/30 p-2 backdrop-blur-xl dark:border-white/10 dark:bg-black/20"
+    >
       <SidebarBody
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="group/sidebar relative justify-between gap-10 border-none"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="justify-between"
       >
         <div className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex items-center justify-between pr-3 pt-1">
-            <div className="mt-2">
-              {isSidebarOpen ? <Logo /> : <LogoIcon />}
-            </div>
-            <AnimatePresence>
-              {isSidebarOpen && (
-                <motion.button
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2, delay: 0.2 }}
-                  onClick={togglePin}
-                  className="rounded-lg p-1 text-neutral-500 hover:bg-neutral-200/80 dark:hover:bg-neutral-700/50"
-                >
-                  {isPinned ? (
-                    <IconLayoutSidebarLeftCollapse className="h-5 w-5" />
-                  ) : (
-                    <IconLayoutSidebarLeftExpand className="h-5 w-5" />
-                  )}
-                </motion.button>
+          <div className="flex items-center justify-between pb-2 pl-3 pr-2 pt-1">
+            <AnimatePresence>{isSidebarOpen && <Logo />}</AnimatePresence>
+            <motion.button
+              onClick={() => setIsPinned((p) => !p)}
+              className="rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-black/10 dark:text-neutral-400 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              {isPinned ? (
+                <IconLayoutSidebarLeftCollapse className="h-5 w-5" />
+              ) : (
+                <IconLayoutSidebarLeftExpand className="h-5 w-5" />
               )}
-            </AnimatePresence>
+            </motion.button>
           </div>
-
-          <div className="mt-8 flex flex-col gap-2">
+          <div className="mt-4 flex flex-col gap-1">
             {links.map((link) => (
               <SidebarLink
                 key={link.label}
                 link={link}
-                isActive={link.active}
+                isActive={!!link.active}
                 isSidebarOpen={isSidebarOpen}
               />
             ))}
           </div>
         </div>
-
-        <div className="flex flex-col">
-          <hr className="my-4 border-t border-neutral-200 dark:border-neutral-700" />
+        <div className="flex flex-col gap-1">
           <SidebarLink
             link={{
               label: "Logout",
               href: "#",
-              icon: <IconArrowLeft className="h-5 w-5 shrink-0" />,
+              icon: <IconArrowLeft className="h-5 w-5" />,
             }}
             isActive={false}
             isSidebarOpen={isSidebarOpen}
@@ -147,7 +127,7 @@ export function CommunitySidebar() {
               icon: (
                 <img
                   src="https://assets.aceternity.com/manu.png"
-                  className="h-7 w-7 shrink-0 rounded-full"
+                  className="h-6 w-6 rounded-full"
                   alt="Avatar"
                 />
               ),
@@ -157,41 +137,25 @@ export function CommunitySidebar() {
           />
         </div>
       </SidebarBody>
-    </Sidebar>
+    </SidebarPrimitive>
   );
 }
 
-type LinkType = {
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-};
-
-export const Logo = () => {
-  return (
-    <a
-      href="#"
-      className="relative flex items-center space-x-2 py-1 pl-3 text-sm font-normal text-black dark:text-white"
+const Logo = () => (
+  <a href="#" className="flex items-center gap-2">
+    <motion.div
+      initial={{ rotate: -90, scale: 0 }}
+      animate={{ rotate: 0, scale: 1 }}
+      transition={{ duration: 0.5, ease: "backInOut" }}
+      className="h-6 w-6 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500"
+    />
+    <motion.span
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay: 0.2 }}
+      className="whitespace-pre text-lg font-bold text-neutral-800 dark:text-white"
     >
-      <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="whitespace-pre font-medium"
-      >
-        Acet Labs
-      </motion.span>
-    </a>
-  );
-};
-
-export const LogoIcon = () => {
-  return (
-    <a
-      href="#"
-      className="relative z-20 flex items-center space-x-2 py-1 pl-3 text-sm font-normal text-black dark:text-white"
-    >
-      <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
-    </a>
-  );
-};
+      TheSocial
+    </motion.span>
+  </a>
+);

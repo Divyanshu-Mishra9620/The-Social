@@ -10,13 +10,12 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { Channel, Category, ChannelType, Server } from "@/types/server";
-import { ChatView } from "./ChatViewPlaceholer";
+import { ChatView } from "./ChatView";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Tab {
   id: string;
   channel: Channel;
-  categoryName: string;
 }
 
 const ChannelLink = ({
@@ -33,65 +32,52 @@ const ChannelLink = ({
     Voice: <IconVolume size={16} className="text-neutral-500" />,
     Video: <IconHash size={16} className="text-neutral-500" />,
   };
-
   return (
     <button
       onClick={onClick}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-neutral-500 transition-all duration-200 hover:bg-neutral-200 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700/50 dark:hover:text-neutral-100",
-        isActive &&
-          "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+        "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors",
+        isActive
+          ? "bg-white/10 text-white"
+          : "text-neutral-400 hover:bg-white/5 hover:text-white"
       )}
     >
       {icons[channel.type]}
-      <span className="font-medium text-sm">{channel.name}</span>
+      <span className="text-sm font-medium">{channel.name}</span>
     </button>
   );
 };
 
 const CategorySection = ({
   category,
-  isExpanded,
-  onToggle,
-  activeChannelId,
   onChannelSelect,
+  activeChannelId,
 }: {
   category: Category;
-  isExpanded: boolean;
-  onToggle: () => void;
-  activeChannelId: string;
   onChannelSelect: (channel: Channel) => void;
-}) => (
-  <div className="mb-2">
-    <button
-      onClick={onToggle}
-      className="flex w-full items-center justify-between rounded-md px-2 py-2 text-neutral-700 transition-colors hover:bg-neutral-200/50 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
-    >
-      <div className="flex items-center gap-2">
-        <motion.div
-          animate={{ rotate: isExpanded ? 90 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <IconChevronRight size={16} />
+  activeChannelId: string | null;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  return (
+    <div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex w-full items-center gap-1.5 px-1 py-1 text-xs font-bold uppercase text-neutral-400 hover:text-white"
+      >
+        <motion.div animate={{ rotate: isExpanded ? 90 : 0 }}>
+          <IconChevronRight size={14} />
         </motion.div>
-        <h3 className="text-sm font-semibold uppercase">{category.name}</h3>
-      </div>
-      <span className="text-xs text-neutral-500">
-        {category.channels?.length || 0}
-      </span>
-    </button>
-
-    <AnimatePresence>
-      {isExpanded && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.2 }}
-          className="ml-4 mt-1 overflow-hidden"
-        >
-          <div className="flex flex-col gap-1 border-l-2 border-neutral-200 pl-2 dark:border-neutral-700">
-            {category?.channels?.map((channel) => (
+        {category.name}
+      </button>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="mt-1 flex flex-col gap-0.5 overflow-hidden pl-2"
+          >
+            {category.channels?.map((channel) => (
               <ChannelLink
                 key={channel._id}
                 channel={channel}
@@ -99,222 +85,143 @@ const CategorySection = ({
                 onClick={() => onChannelSelect(channel)}
               />
             ))}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </div>
-);
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 const TabComponent = ({
   tab,
   isActive,
-  onClose,
   onClick,
+  onClose,
 }: {
   tab: Tab;
   isActive: boolean;
-  onClose: (e: React.MouseEvent) => void;
   onClick: () => void;
+  onClose: (e: React.MouseEvent) => void;
 }) => (
-  <div
+  <motion.div
+    layoutId={`tab-${tab.id}`}
     onClick={onClick}
     className={cn(
-      "group relative flex min-w-[160px] max-w-[240px] items-center gap-2 rounded-t-lg border border-b-0 px-3 py-2 transition-all duration-200 cursor-pointer",
+      "group relative flex h-full cursor-pointer items-center gap-2 border-b-2 px-4 pt-2 text-sm", // Adjusted padding for alignment
       isActive
-        ? "bg-white border-neutral-300 dark:bg-neutral-800 dark:border-neutral-600"
-        : "bg-neutral-100 border-transparent hover:bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+        ? "border-blue-500 text-white"
+        : "border-transparent text-neutral-400 hover:text-white"
     )}
   >
-    <IconHash
-      size={14}
-      className={cn(
-        isActive ? "text-blue-600 dark:text-blue-400" : "text-neutral-500"
-      )}
-    />
-
-    <span
-      className={cn(
-        "flex-1 truncate text-sm",
-        isActive
-          ? "text-neutral-900 dark:text-neutral-100"
-          : "text-neutral-600 dark:text-neutral-400"
-      )}
-    >
-      {tab.channel.name}
-    </span>
-
+    <IconHash size={14} />
+    <span className="truncate">{tab.channel.name}</span>
     <button
       onClick={onClose}
-      className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full p-0.5 hover:bg-neutral-300 dark:hover:bg-neutral-700"
+      className="ml-2 rounded-full p-0.5 text-neutral-500 opacity-0 transition hover:bg-white/10 hover:text-white group-hover:opacity-100"
     >
       <IconX size={14} />
     </button>
-
-    {isActive && (
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400" />
-    )}
-  </div>
-);
-
-const TabBar = ({
-  tabs,
-  activeTabId,
-  onTabClick,
-  onTabClose,
-}: {
-  tabs: Tab[];
-  activeTabId: string | null;
-  onTabClick: (tabId: string) => void;
-  onTabClose: (tabId: string, e: React.MouseEvent) => void;
-}) => (
-  <div className="flex items-end h-12 border-b border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/50 relative z-20">
-    <div className="flex items-end overflow-x-auto scrollbar-hide">
-      {tabs.map((tab) => (
-        <TabComponent
-          key={tab.id}
-          tab={tab}
-          isActive={tab.id === activeTabId}
-          onClose={(e) => onTabClose(tab.id, e)}
-          onClick={() => onTabClick(tab.id)}
-        />
-      ))}
-    </div>
-  </div>
+  </motion.div>
 );
 
 export const CommunityView = ({ community }: { community: Server }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set()
-  );
 
-  const toggleCategory = (categoryId: string) => {
-    setExpandedCategories((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(categoryId)) {
-        newSet.delete(categoryId);
-      } else {
-        newSet.add(categoryId);
-      }
-      return newSet;
-    });
-  };
-
-  const openChannelInTab = (channel: Channel, categoryName: string) => {
-    const tabId = `${channel._id}-${Date.now()}`;
-    const newTab: Tab = {
-      id: tabId,
-      channel,
-      categoryName,
-    };
-
-    setTabs((prev) => {
-      const existingTab = prev.find((tab) => tab.channel._id === channel._id);
-      if (existingTab) {
-        setActiveTabId(existingTab.id);
-        return prev;
-      }
-      return [...prev, newTab];
-    });
-    setActiveTabId(tabId);
+  const openChannelInTab = (channel: Channel) => {
+    const existingTab = tabs.find((t) => t.channel._id === channel._id);
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      return;
+    }
+    const newTab = { id: channel._id, channel };
+    setTabs([...tabs, newTab]);
+    setActiveTabId(newTab.id);
   };
 
   const closeTab = (tabId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setTabs((prev) => {
-      const newTabs = prev.filter((tab) => tab.id !== tabId);
+    const tabIndex = tabs.findIndex((t) => t.id === tabId);
+    const newTabs = tabs.filter((t) => t.id !== tabId);
+    setTabs(newTabs);
 
-      if (activeTabId === tabId) {
-        setActiveTabId(
-          newTabs.length > 0 ? newTabs[newTabs.length - 1].id : null
-        );
+    if (activeTabId === tabId) {
+      if (newTabs.length > 0) {
+        const newActiveIndex = Math.max(0, tabIndex - 1);
+        setActiveTabId(newTabs[newActiveIndex].id);
+      } else {
+        setActiveTabId(null);
       }
-
-      return newTabs;
-    });
-  };
-
-  const switchTab = (tabId: string) => {
-    setActiveTabId(tabId);
+    }
   };
 
   const activeChannel =
     tabs.find((tab) => tab.id === activeTabId)?.channel || null;
 
   return (
-    <div className="flex h-full w-full min-h-0 bg-white dark:bg-neutral-900 relative z-10">
-      <div className="flex w-64 flex-col border-r border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 min-h-0 relative z-10">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-800">
-          <h1 className="truncate text-lg font-bold text-neutral-800 dark:text-neutral-50">
-            {community.name}
-          </h1>
-          <button className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-100">
-            <IconChevronDown size={20} />
-          </button>
+    <div className="flex h-full w-full">
+      <div className="flex w-60 flex-col border-r border-white/10">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 p-4">
+          <h1 className="truncate font-bold text-white">{community.name}</h1>
+          <IconChevronDown size={20} className="text-neutral-400" />
         </header>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto p-4 min-h-0">
+        <nav className="flex-1 space-y-2 overflow-y-auto p-2">
           {community?.categories?.map((category) => (
             <CategorySection
               key={category._id}
               category={category}
-              isExpanded={expandedCategories.has(category._id)}
-              onToggle={() => toggleCategory(category._id)}
-              activeChannelId={activeChannel?._id || ""}
-              onChannelSelect={(channel) =>
-                openChannelInTab(channel, category.name)
-              }
+              activeChannelId={activeChannel?._id || null}
+              onChannelSelect={openChannelInTab}
             />
           ))}
         </nav>
-
-        <footer className="flex shrink-0 items-center gap-3 border-t border-neutral-200 p-3 dark:border-neutral-800">
-          {community.owner.profilePic && (
-            <img
-              src={community.owner.profilePic}
-              alt={community.owner.name}
-              className="h-8 w-8 rounded-full"
-            />
-          )}
+        <footer className="flex shrink-0 items-center gap-3 border-t border-white/10 p-3">
+          <img
+            src={community.owner.profilePic || "/default-avatar.png"}
+            alt={community.owner.name}
+            className="h-8 w-8 rounded-full"
+          />
           <div className="flex-1 truncate">
-            <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+            <p className="text-sm font-semibold text-white">
               {community.owner.name}
             </p>
           </div>
-          <button className="text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-100">
-            <IconSettings size={20} />
-          </button>
+          <IconSettings
+            size={20}
+            className="text-neutral-400 hover:text-white"
+          />
         </footer>
       </div>
 
-      <div className="flex flex-1 flex-col min-h-0 relative z-10">
-        <div className="shrink-0 h-12 relative z-20">
-          {tabs.length > 0 && (
-            <TabBar
-              tabs={tabs}
-              activeTabId={activeTabId}
-              onTabClick={switchTab}
-              onTabClose={closeTab}
-            />
-          )}
-        </div>
+      <div className="flex flex-1 flex-col min-h-0">
+        <header className="flex h-14 shrink-0 items-end border-b border-white/10">
+          <div className="flex h-full items-center">
+            {tabs.map((tab) => (
+              <TabComponent
+                key={tab.id}
+                tab={tab}
+                isActive={tab.id === activeTabId}
+                onClick={() => setActiveTabId(tab.id)}
+                onClose={(e) => closeTab(tab.id, e)}
+              />
+            ))}
+          </div>
+        </header>
 
-        <main className="flex-1 min-h-0 bg-white dark:bg-neutral-900 relative z-10">
+        <main className="flex-1 min-h-0">
           {activeChannel ? (
             <ChatView channel={activeChannel} server={community} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center text-center p-8">
-              <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-black/20 border border-white/10 mb-4">
                 <IconHash size={48} className="text-neutral-400" />
               </div>
-              <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-100 mb-2">
+              <h2 className="text-2xl font-bold text-white mb-2">
                 Welcome to {community.name}
               </h2>
-              <p className="text-neutral-600 dark:text-neutral-400 max-w-md">
-                Select a channel from the sidebar to start chatting. Channels
-                will open in tabs for easy navigation.
+              <p className="max-w-md text-neutral-400">
+                Select a channel to start chatting. Open channels will appear as
+                tabs for easy navigation.
               </p>
             </div>
           )}

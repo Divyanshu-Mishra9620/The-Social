@@ -54,10 +54,12 @@ export const SidebarProvider = ({
 
 export const Sidebar = ({
   children,
+  className,
   open,
   setOpen,
   animate,
 }: {
+  className?: string;
   children: React.ReactNode;
   open?: boolean;
   setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
