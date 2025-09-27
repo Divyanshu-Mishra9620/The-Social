@@ -77,7 +77,13 @@ export const ChatView = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMessages(initialMessages);
+    if (initialMessages && initialMessages.length > 0) {
+      const sorted = [...initialMessages].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      setMessages(sorted);
+    }
   }, [initialMessages]);
 
   useEffect(() => {
@@ -123,28 +129,15 @@ export const ChatView = ({
 
   return (
     <div className="flex h-full flex-col bg-white dark:bg-neutral-900">
-      <div className="flex-1 overflow-y-auto px-4 py-6">
+      <div className="flex-1 overflow-y-auto px-4 py-6 min-h-0">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <IconLoader2 size={32} className="animate-spin text-neutral-500" />
           </div>
         ) : (
-          <div className="flex h-full flex-col justify-end">
-            {messages.length > 0 ? (
-              <div className="space-y-6">
-                <AnimatePresence>
-                  {messages.map((message) => (
-                    <MessageBubble
-                      key={message._id}
-                      message={message}
-                      isOwnMessage={message.sender._id === session?.user?.id}
-                    />
-                  ))}
-                </AnimatePresence>
-                <div ref={messagesEndRef} />
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <div className="space-y-6">
+            {messages.length === 0 && (
+              <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-neutral-200 dark:bg-neutral-800">
                   <IconHash size={40} className="text-neutral-500" />
                 </div>
@@ -156,10 +149,20 @@ export const ChatView = ({
                 </p>
               </div>
             )}
+            <AnimatePresence>
+              {messages.map((message) => (
+                <MessageBubble
+                  key={message._id}
+                  message={message}
+                  isOwnMessage={message.sender._id === session?.user?.id}
+                />
+              ))}
+            </AnimatePresence>
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>
-      <div className="border-t border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="shrink-0 border-t border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
         <form
           onSubmit={handleSendMessage}
           className="flex items-center gap-3 rounded-xl bg-neutral-100 px-3 py-2 dark:bg-neutral-800"

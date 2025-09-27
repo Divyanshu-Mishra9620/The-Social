@@ -43,8 +43,8 @@ export interface Message {
   content: string;
   sender: PopulatedUser;
   channel: string;
-  edited: boolean;
-  attachments: string[];
+  edited?: boolean;
+  attachments?: string[];
   createdAt: string;
   updatedAt: string;
 }

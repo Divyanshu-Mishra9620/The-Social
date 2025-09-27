@@ -69,7 +69,7 @@ const CreateServerModel: React.FC<CreateServerModelProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm"
         >
           <motion.div
             initial={{ scale: 0.95, y: 20, opacity: 0 }}

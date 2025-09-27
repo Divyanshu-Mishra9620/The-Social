@@ -1,134 +1,52 @@
 "use client";
-
 import { useState } from "react";
 import { CommunitySidebar } from "./Sidebar";
-import SearchedCommunityList from "./SearchedCommunityList";
+import { SearchedCommunityList } from "./SearchedCommunityList";
 import PillNav from "./subComponents/PillNav";
-import { FloatingDock } from "@/components/ui/floating-dock";
-import Orb from "./subComponents/Orb";
 import CreateServerModel from "./subComponents/CreateServerModel";
-import { useServerSearch } from "@/hooks/useServerSearch";
-import {
-  IconBrandGithub,
-  IconBrandX,
-  IconExchange,
-  IconHome,
-  IconNewSection,
-  IconTerminal2,
-} from "@tabler/icons-react";
+import { useServerSearch } from "@/hooks/useServerSearch"; // Assuming you have this
+import { useUserServers } from "@/hooks/useUserServers"; // Assuming you have this
 
 export default function ChatHome() {
   const [searchTerm, setSearchTerm] = useState("");
   const [modelOpen, setModelOpen] = useState(false);
 
-  const { communities, isLoading, error } = useServerSearch(searchTerm);
+  const { communities: searchedCommunities, isLoading: isSearchLoading } =
+    useServerSearch(searchTerm);
+  const {
+    userServers,
+    isLoading: isUserServersLoading,
+    mutateUserServers,
+  } = useUserServers();
 
-  const handleSearch = (searchInput: string) => {
-    setSearchTerm(searchInput);
-  };
+  const communitiesToDisplay = searchTerm ? searchedCommunities : userServers;
+  const isLoading = searchTerm ? isSearchLoading : isUserServersLoading;
 
-  const handleModelOpen = () => {
-    setModelOpen(!modelOpen);
-  };
-
-  const links = [
-    {
-      title: "Home",
-      icon: (
-        <IconHome className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-      ),
-      href: "#",
-    },
-    {
-      title: "Products",
-      icon: (
-        <IconTerminal2 className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-      ),
-      href: "#",
-    },
-    {
-      title: "Components",
-      icon: (
-        <IconNewSection className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-      ),
-      href: "#",
-    },
-    {
-      title: "Aceternity UI",
-      icon: (
-        <img
-          src="https://assets.aceternity.com/logo-dark.png"
-          width={20}
-          height={20}
-          alt="Aceternity Logo"
-        />
-      ),
-      href: "#",
-    },
-    {
-      title: "Changelog",
-      icon: (
-        <IconExchange className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-      ),
-      href: "#",
-    },
-    {
-      title: "Twitter",
-      icon: (
-        <IconBrandX className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-      ),
-      href: "#",
-    },
-    {
-      title: "GitHub",
-      icon: (
-        <IconBrandGithub className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-      ),
-      href: "#",
-    },
-  ];
+  const handleSearch = (searchInput: string) => setSearchTerm(searchInput);
+  const handleModelOpen = () => setModelOpen(!modelOpen);
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden">
-      <div className="absolute inset-0 z-[-2]">
-        <Orb
-          hoverIntensity={0.5}
-          rotateOnHover={true}
-          hue={0}
-          forceHoverState={false}
-        />
-      </div>
-      <div className="absolute inset-0 z-[-1]">
-        <div className="h-screen backdrop-blur-2xl" />
-      </div>
-
-      <header className="flex w-full items-center justify-center border-b border-b-neutral-200/50 bg-white/30 shadow-md backdrop-blur-sm dark:border-b-neutral-800/50 dark:bg-black/30">
+    <div className="h-screen overflow-hidden bg-white dark:bg-neutral-900 relative">
+      <header className="fixed top-0 left-0 right-0 p-4 z-[100] bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md">
         <PillNav
           logo="./globe.svg"
-          logoAlt="Company Logo"
+          logoAlt="TheSocial"
           handleCommunities={handleSearch}
           handleModelOpen={handleModelOpen}
         />
       </header>
 
-      <div className="flex flex-1 flex-row overflow-hidden">
-        <div className="relative hidden w-16 flex-shrink-0 md:block">
-          <div className="absolute z-10">
-            <CommunitySidebar />
-          </div>
+      <div className="absolute top-20 left-0 right-0 bottom-0 flex">
+        <div className="relative z-20 h-full">
+          <CommunitySidebar />
         </div>
-
-        <main className="relative flex-1">
-          {isLoading && <p>Loading communities...</p>}
-          {error && <p>Failed to load communities.</p>}
-          {!isLoading && !error && (
-            <SearchedCommunityList communities={communities} />
+        <main className="relative flex-1 z-10 h-full">
+          {isLoading ? (
+            <p className="p-4 text-center text-neutral-500">Loading...</p>
+          ) : (
+            <SearchedCommunityList communities={communitiesToDisplay} />
           )}
         </main>
-
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 md:hidden">
-          <FloatingDock items={links} />
-        </div>
       </div>
 
       <CreateServerModel isOpen={modelOpen} onClose={handleModelOpen} />

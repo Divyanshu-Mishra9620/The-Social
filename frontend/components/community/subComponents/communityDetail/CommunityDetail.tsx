@@ -25,6 +25,7 @@ const EmptyState = () => (
     </div>
   </div>
 );
+
 export default function CommunityDetail({
   selectedCommunityId,
 }: {
@@ -44,9 +45,5 @@ export default function CommunityDetail({
     return <CommunityView community={server} />;
   };
 
-  return (
-    <div className="h-full w-full overflow-hidden bg-transparent">
-      <main className="h-full w-full">{renderContent()}</main>
-    </div>
-  );
+  return <div className="h-full w-full">{renderContent()}</div>;
 }

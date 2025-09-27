@@ -83,7 +83,7 @@ const PillNav: React.FC<PillNavProps> = ({
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
-      className="relative z-50 flex w-full items-center justify-between rounded-full border border-black/[0.05]  backdrop-blur-2xl p-2 shadow-md  dark:border-white/[0.05] dark:bg-neutral-900/60"
+      className="relative z-[100] flex w-full items-center justify-between rounded-full border border-black/[0.05] backdrop-blur-2xl p-2 shadow-md dark:border-white/[0.05] dark:bg-neutral-900/60"
     >
       <Link href="/" className="ml-2 flex-shrink-0">
         <motion.img
