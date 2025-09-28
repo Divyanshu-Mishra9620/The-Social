@@ -1,9 +1,42 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import CommunityList from "../community/subComponents/CommunityList";
 import CommunityDetail from "./subComponents/communityDetail/CommunityDetail";
 import { Server } from "@/types/server";
 import { IconArrowLeft, IconMenu2 } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
+
+const useResizable = (initialWidth: number) => {
+  const [width, setWidth] = useState(initialWidth);
+  const isResizing = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+  };
+
+  const handleMouseUp = () => {
+    isResizing.current = false;
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isResizing.current) {
+      setWidth((prevWidth) => prevWidth + e.movementX);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleMouseMove]);
+
+  return { width, handleMouseDown };
+};
 
 export const SearchedCommunityList = ({
   communities,
@@ -14,6 +47,7 @@ export const SearchedCommunityList = ({
     null
   );
   const [isMobileListVisible, setIsMobileListVisible] = useState(true);
+  const { width, handleMouseDown } = useResizable(320);
 
   useEffect(() => {
     setSelectedCommunity(null);
@@ -35,9 +69,6 @@ export const SearchedCommunityList = ({
       <div className="relative h-full w-full overflow-hidden rounded-2xl border border-black/10 bg-white/30 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-black/20">
         {isMobileListVisible ? (
           <div className="flex h-full flex-col p-4">
-            <h2 className="mb-4 text-lg font-semibold text-neutral-800 dark:text-white">
-              Communities
-            </h2>
             <CommunityList
               communities={communities}
               onSelectCommunity={handleSelectCommunity}
@@ -64,11 +95,11 @@ export const SearchedCommunityList = ({
   return (
     <div className="relative h-full w-full overflow-hidden rounded-2xl border border-black/10 bg-white/30 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-black/20">
       <div className="flex h-full w-full">
-        <div className="flex w-full flex-col border-r border-black/10 p-4 md:w-1/3 dark:border-white/10">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-800 dark:text-white">
-            Communities
-          </h2>
-          <div className="flex-1 min-h-0 overflow-y-auto pr-2">
+        <div
+          className="flex flex-col border-r border-black/10 p-4 dark:border-white/10"
+          style={{ width: `${width}px` }}
+        >
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 no-scrollbar">
             <CommunityList
               communities={communities}
               onSelectCommunity={setSelectedCommunity}
@@ -76,7 +107,11 @@ export const SearchedCommunityList = ({
             />
           </div>
         </div>
-        <div className="hidden w-2/3 flex-1 md:block">
+        <div
+          className="cursor-col-resize w-2 bg-gray-400 hover:bg-gray-500"
+          onMouseDown={handleMouseDown}
+        />
+        <div className="hidden flex-1 md:block">
           <CommunityDetail
             selectedCommunityId={selectedCommunity?._id || null}
           />

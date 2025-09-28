@@ -1,21 +1,25 @@
 "use client";
-import { cn } from "@/lib/utils";
 import { Server } from "@/types/server";
 import { useAuth } from "@/hooks/useAuth";
 import { useSession } from "next-auth/react";
 import useSWRMutation from "swr/mutation";
+import { useState } from "react";
 import { apiClient } from "@/lib/apiClient";
-import { useState, useEffect } from "react";
+import { useTheme } from "../ThemeProvider";
+import { motion } from "framer-motion";
 
 const BACKEND_URI = process.env.NEXT_PUBLIC_BACKEND_URI;
 
-type ServerActionArg = {
+interface ServerActionArgs {
   serverId: string;
   action: "join" | "leave";
   accessToken: string;
-};
+}
 
-async function serverActionRequest(key: string, { arg }: any) {
+async function serverActionRequest(
+  key: string,
+  { arg }: { arg: ServerActionArgs }
+) {
   const url = `${BACKEND_URI}/api/v1/profile/${arg.action}-server/${arg.serverId}`;
   return apiClient(url, arg.accessToken, { method: "POST" });
 }
@@ -24,28 +28,38 @@ export default function CommunityList({
   communities,
   onSelectCommunity,
   selectedCommunityId,
-}: any) {
+  isCollapsed,
+}: {
+  communities: Server[];
+  onSelectCommunity: (community: Server) => void;
+  selectedCommunityId: string | null;
+  isCollapsed?: boolean;
+}) {
+  const { theme } = useTheme();
   const { user } = useAuth();
   const { data: session } = useSession();
+
   const [optimisticUpdates, setOptimisticUpdates] = useState<
     Record<string, "join" | "leave" | null>
   >({});
-  const { trigger: performAction, isMutating } = useSWRMutation<
-    any,
-    any,
-    string,
-    ServerActionArg
-  >("server-action", serverActionRequest);
+
+  const { trigger: performAction, isMutating } = useSWRMutation(
+    "server-action",
+    serverActionRequest
+  );
 
   const handleCommunityAction = async (
     communityToUpdate: Server,
     action: "join" | "leave"
   ) => {
     if (!session?.appJwt || !user?.id) return;
+
+    // Optimistic update
     setOptimisticUpdates((prev) => ({
       ...prev,
       [communityToUpdate._id]: action,
     }));
+
     try {
       await performAction({
         serverId: communityToUpdate._id,
@@ -55,6 +69,7 @@ export default function CommunityList({
     } catch (error) {
       console.error(`Failed to ${action} server:`, error);
     } finally {
+      // Clear optimistic state
       setOptimisticUpdates((prev) => ({
         ...prev,
         [communityToUpdate._id]: null,
@@ -66,12 +81,12 @@ export default function CommunityList({
     const optimisticUpdate = optimisticUpdates[community._id];
     if (optimisticUpdate === "join") return true;
     if (optimisticUpdate === "leave") return false;
-    return community.members.some((member) => member.user === user?.id);
+    return community.members.some((member: any) => member.user === user?.id);
   };
 
   return (
-    <ul className="space-y-2">
-      {communities?.map((community: Server) => {
+    <ul className="space-y-2 no-scrollbar">
+      {communities?.map((community) => {
         const isMember = getMembershipStatus(community);
         const isOwner = community.owner._id === user?.id;
 
@@ -79,40 +94,62 @@ export default function CommunityList({
           return null;
 
         return (
-          <li key={community._id} className="flex items-center gap-3">
-            <button
+          <li
+            key={community._id}
+            className="flex items-center justify-between gap-3"
+          >
+            <motion.button
               onClick={() => onSelectCommunity(community)}
-              className={cn(
-                "relative flex-1 rounded-lg p-3 text-left transition-all duration-200 flex flex-col items-start overflow-hidden",
+              className={`relative flex flex-1 items-center gap-3 rounded-lg p-3 text-left transition-all duration-200 overflow-hidden ${
                 selectedCommunityId === community._id
-                  ? "bg-black/10 dark:bg-white/10"
-                  : "bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10"
-              )}
+                  ? theme === "light"
+                    ? "bg-black/10"
+                    : "bg-white/10"
+                  : theme === "light"
+                  ? "hover:bg-black/5"
+                  : "hover:bg-white/5"
+              }`}
             >
-              <p className="font-semibold text-neutral-800 dark:text-neutral-100">
-                {community.name}
-              </p>
-              <p className="mt-1 truncate text-sm text-neutral-600 dark:text-neutral-400">{`Members: ${community.members.length}`}</p>
-              {selectedCommunityId === community._id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
+              <img
+                src={community.imageUrl || "/default-avatar.png"}
+                alt={community.name}
+                className="h-10 w-10 rounded-full object-cover"
+              />
+              {!isCollapsed && (
+                <div>
+                  <p
+                    className={`font-semibold ${
+                      theme === "light"
+                        ? "text-neutral-800"
+                        : "text-neutral-100"
+                    }`}
+                  >
+                    {community.name}
+                  </p>
+                  <p
+                    className={`mt-1 truncate text-sm ${
+                      theme === "light"
+                        ? "text-neutral-600"
+                        : "text-neutral-400"
+                    }`}
+                  >
+                    Members: {community.members.length}
+                  </p>
+                </div>
               )}
-            </button>
-            {!isOwner && community.visibility !== "invite-only" && (
-              <button
-                onClick={() =>
-                  handleCommunityAction(community, isMember ? "leave" : "join")
-                }
-                disabled={isMutating && !!optimisticUpdates[community._id]}
-                className={cn(
-                  "shrink-0 rounded-md px-3 py-1 text-xs font-semibold transition disabled:opacity-50",
-                  isMember
-                    ? "bg-red-500/10 text-red-600 hover:bg-red-500/20 dark:text-red-400"
-                    : "bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:text-blue-400"
-                )}
-              >
-                {isMember ? "Leave" : "Join"}
-              </button>
-            )}
+            </motion.button>
+
+            {!isOwner &&
+              !isMember &&
+              community.visibility !== "invite-only" && (
+                <button
+                  onClick={() => handleCommunityAction(community, "join")}
+                  disabled={isMutating}
+                  className="rounded-lg px-3 py-1 text-sm font-semibold transition disabled:opacity-50 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20"
+                >
+                  Join
+                </button>
+              )}
           </li>
         );
       })}

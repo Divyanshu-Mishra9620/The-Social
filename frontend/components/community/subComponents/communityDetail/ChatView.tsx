@@ -40,7 +40,7 @@ const MessageBubble = ({
     >
       <div className="flex items-center gap-2">
         {!isOwnMessage && (
-          <span className="text-sm font-semibold text-neutral-200">
+          <span className="text-sm font-semibold text-[color:var(--color-chat-view-foreground)]">
             {message.sender.name}
           </span>
         )}
@@ -129,7 +129,7 @@ export const ChatView = ({
   };
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div className="relative flex h-full flex-col bg-[color:var(--color-chat-view-background)] text-[color:var(--color-chat-view-foreground)]">
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
@@ -141,7 +141,7 @@ export const ChatView = ({
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-black/20 border border-white/10">
                 <IconHash size={32} className="text-neutral-400" />
               </div>
-              <h2 className="mt-4 text-2xl font-bold text-white">
+              <h2 className="mt-4 text-2xl font-bold">
                 Welcome to #{channel.name}!
               </h2>
               <p className="mt-1 text-sm text-neutral-400">
@@ -177,7 +177,7 @@ export const ChatView = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message #${channel.name}`}
-            className="flex-1 bg-transparent text-sm text-neutral-200 placeholder:text-neutral-500 focus:outline-none"
+            className="flex-1 bg-transparent text-sm placeholder:text-neutral-500 focus:outline-none"
           />
           <button
             type="submit"

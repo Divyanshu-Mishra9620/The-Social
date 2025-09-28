@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   IconHash,
   IconVolume,
@@ -12,11 +12,45 @@ import { cn } from "@/lib/utils";
 import { Channel, Category, ChannelType, Server } from "@/types/server";
 import { ChatView } from "./ChatView";
 import { motion, AnimatePresence } from "framer-motion";
+import { set } from "zod";
+import { useRouter } from "next/navigation";
 
 interface Tab {
   id: string;
   channel: Channel;
 }
+
+const useResizable = (initialWidth: number) => {
+  const [width, setWidth] = useState(initialWidth);
+  const isResizing = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+  };
+
+  const handleMouseUp = () => {
+    isResizing.current = false;
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isResizing.current) {
+      setWidth((prevWidth) => prevWidth + e.movementX);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [handleMouseMove]);
+
+  return { width, handleMouseDown };
+};
 
 const ChannelLink = ({
   channel,
@@ -32,19 +66,35 @@ const ChannelLink = ({
     Voice: <IconVolume size={16} className="text-neutral-500" />,
     Video: <IconHash size={16} className="text-neutral-500" />,
   };
+
+  const router = useRouter();
+
+  const handleSettingsClick = () => {
+    console.log("Settings clicked for channel:", channel.name);
+    router.push(`/community/${channel._id}`);
+  };
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors",
-        isActive
-          ? "bg-white/10 text-white"
-          : "text-neutral-400 hover:bg-white/5 hover:text-white"
-      )}
-    >
-      {icons[channel.type]}
-      <span className="text-sm font-medium">{channel.name}</span>
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={onClick}
+        className={cn(
+          "group flex w-full items-center gap-2 rounded-md px-2 py-1.5 transition-colors",
+          isActive
+            ? "bg-white/10 text-white"
+            : "text-neutral-400 hover:bg-white/5 hover:text-white"
+        )}
+      >
+        {icons[channel.type]}
+        <span className="text-sm font-medium">{channel.name}</span>
+      </button>
+      <div
+        className=" hover:rotate-180 transition-transform hover:cursor-pointer"
+        onClick={() => handleSettingsClick()}
+      >
+        <IconSettings style={{ height: 16, width: 16 }} />
+      </div>
+    </div>
   );
 };
 
@@ -107,7 +157,7 @@ const TabComponent = ({
     layoutId={`tab-${tab.id}`}
     onClick={onClick}
     className={cn(
-      "group relative flex h-full cursor-pointer items-center gap-2 border-b-2 px-4 pt-2 text-sm", // Adjusted padding for alignment
+      "group relative flex h-full cursor-pointer items-center gap-2 border-b-2 px-4 pt-2 text-sm",
       isActive
         ? "border-blue-500 text-white"
         : "border-transparent text-neutral-400 hover:text-white"
@@ -127,6 +177,8 @@ const TabComponent = ({
 export const CommunityView = ({ community }: { community: Server }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const [activeSetting, setActiveSetting] = useState<boolean | null>(false);
+  const { width, handleMouseDown } = useResizable(240);
 
   const openChannelInTab = (channel: Channel) => {
     const existingTab = tabs.find((t) => t.channel._id === channel._id);
@@ -160,12 +212,15 @@ export const CommunityView = ({ community }: { community: Server }) => {
 
   return (
     <div className="flex h-full w-full">
-      <div className="flex w-60 flex-col border-r border-white/10">
+      <div
+        className="flex flex-col border-r border-white/10 z-20"
+        style={{ width: `${width}px` }}
+      >
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 p-4">
           <h1 className="truncate font-bold text-white">{community.name}</h1>
           <IconChevronDown size={20} className="text-neutral-400" />
         </header>
-        <nav className="flex-1 space-y-2 overflow-y-auto p-2">
+        <nav className="flex-1 space-y-2 overflow-y-auto p-2 no-scrollbar">
           {community?.categories?.map((category) => (
             <CategorySection
               key={category._id}
@@ -192,6 +247,10 @@ export const CommunityView = ({ community }: { community: Server }) => {
           />
         </footer>
       </div>
+      <div
+        className="cursor-col-resize w-2 bg-gray-400 hover:bg-gray-500"
+        onMouseDown={handleMouseDown}
+      />
 
       <div className="flex flex-1 flex-col min-h-0">
         <header className="flex h-14 shrink-0 items-end border-b border-white/10">

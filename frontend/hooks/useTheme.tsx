@@ -8,7 +8,7 @@ import {
   ReactNode,
 } from "react";
 
-type Theme = "light" | "dark"; // | "neon" | "ocean" | "sunset";
+type Theme = "light" | "dark" | "neon" | "ocean" | "sunset";
 
 interface ThemeColors {
   primary: string;
@@ -45,51 +45,51 @@ const themeConfigs: Record<Theme, ThemeColors> = {
     background: "rgba(255, 255, 255, 0.95)",
     surface: "rgba(248, 250, 252, 0.9)",
     text: "#0f172a",
-    textSecondary: "#0f172a",
+    textSecondary: "#64748b",
     border: "rgba(0, 0, 0, 0.1)",
     orbHue: 200,
     gradientFrom: "#3b82f6",
     gradientTo: "#8b5cf6",
   },
-  // neon: {
-  //   primary: "#00ff88",
-  //   secondary: "#ff0080",
-  //   accent: "#00ffff",
-  //   background: "rgba(0, 0, 0, 0.98)",
-  //   surface: "rgba(10, 10, 30, 0.9)",
-  //   text: "#00ff88",
-  //   textSecondary: "#88ffaa",
-  //   border: "rgba(0, 255, 136, 0.2)",
-  //   orbHue: 140,
-  //   gradientFrom: "#00ff88",
-  //   gradientTo: "#ff0080",
-  // },
-  // ocean: {
-  //   primary: "#0ea5e9",
-  //   secondary: "#06b6d4",
-  //   accent: "#8b5cf6",
-  //   background: "rgba(2, 6, 23, 0.95)",
-  //   surface: "rgba(15, 23, 42, 0.8)",
-  //   text: "#e2e8f0",
-  //   textSecondary: "#94a3b8",
-  //   border: "rgba(14, 165, 233, 0.2)",
-  //   orbHue: 200,
-  //   gradientFrom: "#0ea5e9",
-  //   gradientTo: "#06b6d4",
-  // },
-  // sunset: {
-  //   primary: "#f97316",
-  //   secondary: "#ef4444",
-  //   accent: "#eab308",
-  //   background: "rgba(20, 10, 5, 0.95)",
-  //   surface: "rgba(45, 25, 15, 0.8)",
-  //   text: "#fef3c7",
-  //   textSecondary: "#fde68a",
-  //   border: "rgba(249, 115, 22, 0.2)",
-  //   orbHue: 20,
-  //   gradientFrom: "#f97316",
-  //   gradientTo: "#ef4444",
-  // },
+  neon: {
+    primary: "#00ff88",
+    secondary: "#ff0080",
+    accent: "#00ffff",
+    background: "rgba(0, 0, 0, 0.98)",
+    surface: "rgba(10, 10, 30, 0.9)",
+    text: "#00ff88",
+    textSecondary: "#88ffaa",
+    border: "rgba(0, 255, 136, 0.2)",
+    orbHue: 140,
+    gradientFrom: "#00ff88",
+    gradientTo: "#ff0080",
+  },
+  ocean: {
+    primary: "#0ea5e9",
+    secondary: "#06b6d4",
+    accent: "#8b5cf6",
+    background: "rgba(2, 6, 23, 0.95)",
+    surface: "rgba(15, 23, 42, 0.8)",
+    text: "#e2e8f0",
+    textSecondary: "#94a3b8",
+    border: "rgba(14, 165, 233, 0.2)",
+    orbHue: 200,
+    gradientFrom: "#0ea5e9",
+    gradientTo: "#06b6d4",
+  },
+  sunset: {
+    primary: "#f97316",
+    secondary: "#ef4444",
+    accent: "#eab308",
+    background: "rgba(20, 10, 5, 0.95)",
+    surface: "rgba(45, 25, 15, 0.8)",
+    text: "#fef3c7",
+    textSecondary: "#fde68a",
+    border: "rgba(249, 115, 22, 0.2)",
+    orbHue: 20,
+    gradientFrom: "#f97316",
+    gradientTo: "#ef4444",
+  },
 };
 
 interface ThemeContextProps {
@@ -140,7 +140,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setThemeState(newTheme);
   };
 
-  const themes: Theme[] = ["dark", "light"];
+  const themes: Theme[] = ["dark", "light", "neon", "ocean", "sunset"];
   const nextTheme = () => {
     const currentIndex = themes.indexOf(theme);
     const nextIndex = (currentIndex + 1) % themes.length;

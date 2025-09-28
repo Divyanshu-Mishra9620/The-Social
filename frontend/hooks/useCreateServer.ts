@@ -7,7 +7,6 @@ async function createServerRequest(
   { arg }: { arg: { formData: FormData; accessToken: string } }
 ) {
   const { accessToken, formData } = arg;
-  console.log("accessToken", accessToken, "formData", formData);
 
   const res = await fetch(url, {
     method: "POST",

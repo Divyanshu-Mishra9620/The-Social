@@ -2,7 +2,7 @@
 import React from "react";
 import { IconUsers, IconLoader2 } from "@tabler/icons-react";
 import { useServerDetails } from "@/hooks/useServerDetails";
-import { CommunityView } from "./CommunityView";
+import { CommunityView } from "../communityDetail/CommunityView";
 
 const ThemedState = ({
   icon,
