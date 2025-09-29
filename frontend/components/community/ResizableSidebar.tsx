@@ -66,7 +66,6 @@ export const ResizableSidebar = ({
           communities={communities}
           onSelectCommunity={onSelectCommunity}
           selectedCommunityId={selectedCommunityId}
-          //   isCollapsed={isCollapsed}
         />
       </div>
     </motion.div>

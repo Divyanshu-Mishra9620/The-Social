@@ -127,7 +127,10 @@
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .resize-handle {
+    @apply w-2 cursor-col-resize bg-gray-400/50 hover:bg-gray-500/70 dark:bg-gray-600/50 dark:hover:bg-gray-500/70 transition-colors;
   }
 }

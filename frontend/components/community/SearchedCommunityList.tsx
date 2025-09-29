@@ -5,6 +5,7 @@ import CommunityDetail from "./subComponents/communityDetail/CommunityDetail";
 import { Server } from "@/types/server";
 import { IconArrowLeft, IconMenu2 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const useResizable = (initialWidth: number) => {
   const [width, setWidth] = useState(initialWidth);
@@ -48,6 +49,7 @@ export const SearchedCommunityList = ({
   );
   const [isMobileListVisible, setIsMobileListVisible] = useState(true);
   const { width, handleMouseDown } = useResizable(320);
+  const router = useRouter();
 
   useEffect(() => {
     setSelectedCommunity(null);
@@ -56,6 +58,7 @@ export const SearchedCommunityList = ({
 
   const handleSelectCommunity = (server: Server) => {
     setSelectedCommunity(server);
+    router.push(`/community/${server._id}`);
     setIsMobileListVisible(false); // Hide list on mobile after selection
   };
 
@@ -69,10 +72,13 @@ export const SearchedCommunityList = ({
       <div className="relative h-full w-full overflow-hidden rounded-2xl border border-black/10 bg-white/30 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-black/20">
         {isMobileListVisible ? (
           <div className="flex h-full flex-col p-4">
+            <h2 className="mb-4 text-lg font-semibold text-neutral-800 dark:text-white">
+              Communities
+            </h2>
             <CommunityList
               communities={communities}
               onSelectCommunity={handleSelectCommunity}
-              selectedCommunityId={null}
+              selectedCommunityId={selectedCommunity?._id || null}
             />
           </div>
         ) : (
@@ -99,23 +105,23 @@ export const SearchedCommunityList = ({
           className="flex flex-col border-r border-black/10 p-4 dark:border-white/10"
           style={{ width: `${width}px` }}
         >
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 no-scrollbar">
+          <h2 className="mb-4 text-lg font-semibold text-neutral-800 dark:text-white">
+            Communities
+          </h2>
+          <div className="flex-1 min-h-0 overflow-y-auto pr-2 no-scrollbar">
             <CommunityList
               communities={communities}
-              onSelectCommunity={setSelectedCommunity}
+              onSelectCommunity={handleSelectCommunity}
               selectedCommunityId={selectedCommunity?._id || null}
             />
           </div>
         </div>
-        <div
-          className="cursor-col-resize w-2 bg-gray-400 hover:bg-gray-500"
-          onMouseDown={handleMouseDown}
-        />
-        <div className="hidden flex-1 md:block">
+        <div className="resize-handle" onMouseDown={handleMouseDown} />
+        {/* <div className="hidden flex-1 md:block">
           <CommunityDetail
             selectedCommunityId={selectedCommunity?._id || null}
           />
-        </div>
+        </div> */}
       </div>
     </div>
   );

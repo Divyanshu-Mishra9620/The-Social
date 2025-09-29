@@ -10,9 +10,8 @@ import Orb from "./subComponents/Orb";
 import { IconLoader2 } from "@tabler/icons-react";
 import { ThemeProvider, useTheme } from "./ThemeProvider";
 
-// A new inner component to access the theme context
 const ThemedChatHome = () => {
-  const { colors } = useTheme(); // Access the current theme's colors
+  const { colors } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModelOpen, setIsModelOpen] = useState(false);
 
@@ -43,7 +42,6 @@ const ThemedChatHome = () => {
         color: colors.text,
       }}
     >
-      {/* Background Orb and Blur Effect */}
       <div className="absolute inset-0 z-0">
         <Orb />
       </div>
@@ -52,7 +50,6 @@ const ThemedChatHome = () => {
         style={{ backgroundColor: "rgba(0,0,0,0.3)" }} // Consistent blur overlay
       />
 
-      {/* Main Layout */}
       <div className="relative z-10 flex h-full w-full flex-col">
         <header className="shrink-0 p-2 md:p-4">
           <PillNav
@@ -86,16 +83,11 @@ const ThemedChatHome = () => {
         </div>
       </div>
 
-      <CreateServerModel
-        isOpen={isModelOpen}
-        onClose={handleModelToggle}
-        // onSuccess={onServerCreated}
-      />
+      <CreateServerModel isOpen={isModelOpen} onClose={handleModelToggle} />
     </div>
   );
 };
 
-// The main export wraps the app in the provider
 export default function ChatHome() {
   return (
     <ThemeProvider>

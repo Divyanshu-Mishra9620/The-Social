@@ -12,13 +12,7 @@ import { cn } from "@/lib/utils";
 import { Channel, Category, ChannelType, Server } from "@/types/server";
 import { ChatView } from "./ChatView";
 import { motion, AnimatePresence } from "framer-motion";
-import { set } from "zod";
 import { useRouter } from "next/navigation";
-
-interface Tab {
-  id: string;
-  channel: Channel;
-}
 
 const useResizable = (initialWidth: number) => {
   const [width, setWidth] = useState(initialWidth);
@@ -67,13 +61,6 @@ const ChannelLink = ({
     Video: <IconHash size={16} className="text-neutral-500" />,
   };
 
-  const router = useRouter();
-
-  const handleSettingsClick = () => {
-    console.log("Settings clicked for channel:", channel.name);
-    router.push(`/community/${channel._id}`);
-  };
-
   return (
     <div className="flex items-center gap-2">
       <button
@@ -88,12 +75,6 @@ const ChannelLink = ({
         {icons[channel.type]}
         <span className="text-sm font-medium">{channel.name}</span>
       </button>
-      <div
-        className=" hover:rotate-180 transition-transform hover:cursor-pointer"
-        onClick={() => handleSettingsClick()}
-      >
-        <IconSettings style={{ height: 16, width: 16 }} />
-      </div>
     </div>
   );
 };
@@ -142,73 +123,32 @@ const CategorySection = ({
   );
 };
 
-const TabComponent = ({
-  tab,
-  isActive,
-  onClick,
-  onClose,
+export const CommunityView = ({
+  community,
+  initialChannelId,
 }: {
-  tab: Tab;
-  isActive: boolean;
-  onClick: () => void;
-  onClose: (e: React.MouseEvent) => void;
-}) => (
-  <motion.div
-    layoutId={`tab-${tab.id}`}
-    onClick={onClick}
-    className={cn(
-      "group relative flex h-full cursor-pointer items-center gap-2 border-b-2 px-4 pt-2 text-sm",
-      isActive
-        ? "border-blue-500 text-white"
-        : "border-transparent text-neutral-400 hover:text-white"
-    )}
-  >
-    <IconHash size={14} />
-    <span className="truncate">{tab.channel.name}</span>
-    <button
-      onClick={onClose}
-      className="ml-2 rounded-full p-0.5 text-neutral-500 opacity-0 transition hover:bg-white/10 hover:text-white group-hover:opacity-100"
-    >
-      <IconX size={14} />
-    </button>
-  </motion.div>
-);
-
-export const CommunityView = ({ community }: { community: Server }) => {
-  const [tabs, setTabs] = useState<Tab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [activeSetting, setActiveSetting] = useState<boolean | null>(false);
-  const { width, handleMouseDown } = useResizable(240);
-
-  const openChannelInTab = (channel: Channel) => {
-    const existingTab = tabs.find((t) => t.channel._id === channel._id);
-    if (existingTab) {
-      setActiveTabId(existingTab.id);
-      return;
-    }
-    const newTab = { id: channel._id, channel };
-    setTabs([...tabs, newTab]);
-    setActiveTabId(newTab.id);
-  };
-
-  const closeTab = (tabId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const tabIndex = tabs.findIndex((t) => t.id === tabId);
-    const newTabs = tabs.filter((t) => t.id !== tabId);
-    setTabs(newTabs);
-
-    if (activeTabId === tabId) {
-      if (newTabs.length > 0) {
-        const newActiveIndex = Math.max(0, tabIndex - 1);
-        setActiveTabId(newTabs[newActiveIndex].id);
-      } else {
-        setActiveTabId(null);
+  community: Server;
+  initialChannelId?: string;
+}) => {
+  const router = useRouter();
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(() => {
+    if (initialChannelId) {
+      for (const category of community.categories) {
+        const foundChannel = category.channels.find(
+          (c) => c._id === initialChannelId
+        );
+        if (foundChannel) return foundChannel;
       }
     }
-  };
+    return community.categories[0]?.channels[0] || null;
+  });
 
-  const activeChannel =
-    tabs.find((tab) => tab.id === activeTabId)?.channel || null;
+  const { width, handleMouseDown } = useResizable(240);
+
+  const handleChannelSelect = (channel: Channel) => {
+    setActiveChannel(channel);
+    router.push(`/community/${community._id}/${channel._id}`);
+  };
 
   return (
     <div className="flex h-full w-full">
@@ -226,7 +166,7 @@ export const CommunityView = ({ community }: { community: Server }) => {
               key={category._id}
               category={category}
               activeChannelId={activeChannel?._id || null}
-              onChannelSelect={openChannelInTab}
+              onChannelSelect={handleChannelSelect}
             />
           ))}
         </nav>
@@ -253,20 +193,6 @@ export const CommunityView = ({ community }: { community: Server }) => {
       />
 
       <div className="flex flex-1 flex-col min-h-0">
-        <header className="flex h-14 shrink-0 items-end border-b border-white/10">
-          <div className="flex h-full items-center">
-            {tabs.map((tab) => (
-              <TabComponent
-                key={tab.id}
-                tab={tab}
-                isActive={tab.id === activeTabId}
-                onClick={() => setActiveTabId(tab.id)}
-                onClose={(e) => closeTab(tab.id, e)}
-              />
-            ))}
-          </div>
-        </header>
-
         <main className="flex-1 min-h-0">
           {activeChannel ? (
             <ChatView channel={activeChannel} server={community} />
@@ -279,8 +205,7 @@ export const CommunityView = ({ community }: { community: Server }) => {
                 Welcome to {community.name}
               </h2>
               <p className="max-w-md text-neutral-400">
-                Select a channel to start chatting. Open channels will appear as
-                tabs for easy navigation.
+                Select a channel to start chatting.
               </p>
             </div>
           )}

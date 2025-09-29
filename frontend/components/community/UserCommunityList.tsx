@@ -5,9 +5,10 @@ import { useSession } from "next-auth/react";
 import useSWRMutation from "swr/mutation";
 import { useState } from "react";
 import { apiClient } from "@/lib/apiClient";
-import { useTheme } from "../ThemeProvider";
+import { useTheme } from "./ThemeProvider";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 const BACKEND_URI = process.env.NEXT_PUBLIC_BACKEND_URI;
 
@@ -25,21 +26,13 @@ async function serverActionRequest(
   return apiClient(url, arg.accessToken, { method: "POST" });
 }
 
-export default function CommunityList({
-  communities,
-  onSelectCommunity,
-  selectedCommunityId,
-  isCollapsed,
-}: {
-  communities: Server[];
-  onSelectCommunity: (community: Server) => void;
-  selectedCommunityId: string | null;
-  isCollapsed?: boolean;
-}) {
+export function UserCommunityList({ communities }: { communities: Server[] }) {
   const { theme } = useTheme();
   const { user } = useAuth();
   const { data: session } = useSession();
   const router = useRouter();
+  const params = useParams();
+  const selectedCommunityId = params.serverId as string;
 
   const [optimisticUpdates, setOptimisticUpdates] = useState<
     Record<string, "join" | "leave" | null>
@@ -85,37 +78,39 @@ export default function CommunityList({
   };
 
   return (
-    <ul className="space-y-2 no-scrollbar">
-      {communities?.map((community) => {
-        const isMember = getMembershipStatus(community);
-        const isOwner = community.owner._id === user?.id;
+    <div className="flex flex-col h-full p-4">
+      <h2 className="mb-4 text-lg font-semibold">Your Communities</h2>
+      <ul className="space-y-2 no-scrollbar flex-1 overflow-y-auto">
+        {communities?.map((community) => {
+          const isMember = getMembershipStatus(community);
+          const isOwner = community.owner._id === user?.id;
 
-        if (community.visibility === "private" && !isMember && !isOwner)
-          return null;
+          if (community.visibility === "private" && !isMember && !isOwner)
+            return null;
 
-        return (
-          <li
-            key={community._id}
-            className="flex items-center justify-between gap-3"
-          >
-            <motion.button
-              onClick={() => onSelectCommunity(community)}
-              className={`relative flex flex-1 items-center gap-3 rounded-lg p-3 text-left transition-all duration-200 overflow-hidden ${
-                selectedCommunityId === community._id
-                  ? theme === "light"
-                    ? "bg-black/10"
-                    : "bg-white/10"
-                  : theme === "light"
-                  ? "hover:bg-black/5"
-                  : "hover:bg-white/5"
-              }`}
+          return (
+            <li
+              key={community._id}
+              className="flex items-center justify-between gap-3"
             >
-              <img
-                src={community.imageUrl || "/default-avatar.png"}
-                alt={community.name}
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              {!isCollapsed && (
+              <motion.button
+                onClick={() => router.push(`/community/${community._id}`)}
+                className={`relative flex flex-1 items-center gap-3 rounded-lg p-3 text-left transition-all duration-200 overflow-hidden ${
+                  selectedCommunityId === community._id
+                    ? theme === "light"
+                      ? "bg-black/10"
+                      : "bg-white/10"
+                    : theme === "light"
+                    ? "hover:bg-black/5"
+                    : "hover:bg-white/5"
+                }`}
+              >
+                <img
+                  src={community.imageUrl || "/default-avatar.png"}
+                  alt={community.name}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+
                 <div>
                   <p
                     className={`font-semibold ${
@@ -136,23 +131,23 @@ export default function CommunityList({
                     Members: {community.members.length}
                   </p>
                 </div>
-              )}
-            </motion.button>
+              </motion.button>
 
-            {!isOwner &&
-              !isMember &&
-              community.visibility !== "invite-only" && (
-                <button
-                  onClick={() => handleCommunityAction(community, "join")}
-                  disabled={isMutating}
-                  className="rounded-lg px-3 py-1 text-sm font-semibold transition disabled:opacity-50 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20"
-                >
-                  Join
-                </button>
-              )}
-          </li>
-        );
-      })}
-    </ul>
+              {!isOwner &&
+                !isMember &&
+                community.visibility !== "invite-only" && (
+                  <button
+                    onClick={() => handleCommunityAction(community, "join")}
+                    disabled={isMutating}
+                    className="rounded-lg px-3 py-1 text-sm font-semibold transition disabled:opacity-50 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20"
+                  >
+                    Join
+                  </button>
+                )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

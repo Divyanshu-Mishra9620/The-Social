@@ -117,13 +117,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const newColors = themeConfigs[theme];
     setColors(newColors);
 
-    // Update CSS custom properties
     const root = document.documentElement;
     Object.entries(newColors).forEach(([key, value]) => {
       root.style.setProperty(`--theme-${key}`, value);
     });
 
-    // Update class-based themes
     document.documentElement.classList.remove(
       "light",
       "dark",
