@@ -71,36 +71,36 @@ interface ThemeColors {
 
 const themeConfigs: Record<Theme, ThemeColors> = {
   dark: {
-    // Primary colors - Vibrant blue for CTAs
-    primary: "#3b82f6",
-    primaryHover: "#2563eb",
-    primaryActive: "#1d4ed8",
+    // Primary colors - Professional blue with proper contrast
+    primary: "#4f46e5",
+    primaryHover: "#4338ca",
+    primaryActive: "#3730a3",
 
-    // Secondary colors - Purple accent
-    secondary: "#8b5cf6",
-    secondaryHover: "#7c3aed",
+    // Secondary colors - Refined indigo
+    secondary: "#6366f1",
+    secondaryHover: "#4f46e5",
 
-    // Accent colors - Cyan for highlights
-    accent: "#06b6d4",
-    accentHover: "#0891b2",
+    // Accent colors - Subtle cyan
+    accent: "#0ea5e9",
+    accentHover: "#0284c7",
 
-    // Background layers - Deep, rich blacks with subtle variations
-    background: "#0a0a0a",
-    backgroundSecondary: "#121212",
-    surface: "rgba(24, 24, 27, 0.95)",
-    surfaceHover: "rgba(39, 39, 42, 0.95)",
-    surfaceActive: "rgba(63, 63, 70, 0.95)",
+    // Background layers - Professional dark with depth
+    background: "#0f0f11",
+    backgroundSecondary: "#18181b",
+    surface: "rgba(24, 24, 27, 0.98)",
+    surfaceHover: "rgba(39, 39, 42, 0.98)",
+    surfaceActive: "rgba(52, 52, 57, 0.98)",
 
-    // Text hierarchy - Optimized for WCAG AAA compliance
-    textPrimary: "#fafafa",
-    textSecondary: "#e4e4e7",
-    textTertiary: "#a1a1aa",
-    textMuted: "#71717a",
+    // Text hierarchy - WCAG AAA compliant
+    textPrimary: "#f8fafc",
+    textSecondary: "#cbd5e1",
+    textTertiary: "#94a3b8",
+    textMuted: "#64748b",
 
-    // Borders - Subtle but visible
-    border: "rgba(63, 63, 70, 0.4)",
-    borderHover: "rgba(82, 82, 91, 0.6)",
-    divider: "rgba(63, 63, 70, 0.3)",
+    // Borders - Clear visual separation
+    border: "rgba(71, 85, 105, 0.3)",
+    borderHover: "rgba(100, 116, 139, 0.4)",
+    divider: "rgba(71, 85, 105, 0.2)",
 
     // Status colors
     success: "#10b981",
@@ -109,83 +109,83 @@ const themeConfigs: Record<Theme, ThemeColors> = {
     info: "#3b82f6",
 
     // Interactive states
-    hover: "rgba(255, 255, 255, 0.05)",
-    active: "rgba(255, 255, 255, 0.1)",
-    focus: "rgba(59, 130, 246, 0.4)",
+    hover: "rgba(255, 255, 255, 0.06)",
+    active: "rgba(255, 255, 255, 0.12)",
+    focus: "rgba(79, 70, 229, 0.35)",
 
     // Chat-specific
-    chatBackground: "rgba(10, 10, 10, 0.6)",
-    chatBubbleOwn: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-    chatBubbleOther: "rgba(39, 39, 42, 0.95)",
-    chatInputBackground: "rgba(24, 24, 27, 0.8)",
+    chatBackground: "rgba(15, 15, 17, 0.5)",
+    chatBubbleOwn: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+    chatBubbleOther: "rgba(39, 39, 42, 0.98)",
+    chatInputBackground: "rgba(24, 24, 27, 0.95)",
 
     // Orb effect
-    orbHue: 220,
-    gradientFrom: "#3b82f6",
-    gradientTo: "#8b5cf6",
+    orbHue: 245,
+    gradientFrom: "#4f46e5",
+    gradientTo: "#6366f1",
 
     // Skeleton loaders
-    skeletonBase: "rgba(39, 39, 42, 0.5)",
-    skeletonHighlight: "rgba(63, 63, 70, 0.5)",
+    skeletonBase: "rgba(39, 39, 42, 0.6)",
+    skeletonHighlight: "rgba(52, 52, 57, 0.6)",
   },
 
   light: {
-    // Primary colors - Professional blue
-    primary: "#2563eb",
-    primaryHover: "#1d4ed8",
-    primaryActive: "#1e40af",
+    // Primary colors - Professional indigo
+    primary: "#4f46e5",
+    primaryHover: "#4338ca",
+    primaryActive: "#3730a3",
 
-    // Secondary colors - Elegant purple
-    secondary: "#7c3aed",
-    secondaryHover: "#6d28d9",
+    // Secondary colors - Refined purple
+    secondary: "#6366f1",
+    secondaryHover: "#4f46e5",
 
-    // Accent colors - Fresh teal
-    accent: "#0891b2",
-    accentHover: "#0e7490",
+    // Accent colors - Professional sky blue
+    accent: "#0284c7",
+    accentHover: "#0369a1",
 
-    // Background layers - Clean, bright whites with warmth
+    // Background layers - Clean, professional whites
     background: "#ffffff",
-    backgroundSecondary: "#f9fafb",
-    surface: "rgba(255, 255, 255, 0.95)",
-    surfaceHover: "rgba(249, 250, 251, 0.95)",
-    surfaceActive: "rgba(243, 244, 246, 0.95)",
+    backgroundSecondary: "#f8fafc",
+    surface: "rgba(255, 255, 255, 0.98)",
+    surfaceHover: "rgba(248, 250, 252, 0.98)",
+    surfaceActive: "rgba(241, 245, 249, 0.98)",
 
-    // Text hierarchy - Optimized for readability
+    // Text hierarchy - Professional readability
     textPrimary: "#0f172a",
     textSecondary: "#334155",
     textTertiary: "#64748b",
     textMuted: "#94a3b8",
 
-    // Borders - Visible but not harsh
-    border: "rgba(226, 232, 240, 0.8)",
-    borderHover: "rgba(203, 213, 225, 0.9)",
-    divider: "rgba(226, 232, 240, 0.6)",
+    // Borders - Defined but subtle
+    border: "rgba(203, 213, 225, 0.6)",
+    borderHover: "rgba(148, 163, 184, 0.5)",
+    divider: "rgba(226, 232, 240, 0.5)",
 
     // Status colors
-    success: "#059669",
-    warning: "#d97706",
-    error: "#dc2626",
-    info: "#2563eb",
+    success: "#10b981",
+    warning: "#f59e0b",
+    error: "#ef4444",
+    info: "#3b82f6",
 
     // Interactive states
-    hover: "rgba(0, 0, 0, 0.04)",
-    active: "rgba(0, 0, 0, 0.08)",
-    focus: "rgba(37, 99, 235, 0.2)",
+    hover: "rgba(15, 23, 42, 0.04)",
+    active: "rgba(15, 23, 42, 0.08)",
+    focus: "rgba(79, 70, 229, 0.2)",
 
     // Chat-specific
-    chatBackground: "rgba(255, 255, 255, 0.4)",
-    chatBubbleOwn: "linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)",
-    chatBubbleOther: "rgba(243, 244, 246, 0.95)",
-    chatInputBackground: "rgba(255, 255, 255, 0.9)",
+    chatBackground: "rgba(255, 255, 255, 0.3)",
+    chatBubbleOwn: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+    chatBubbleOther: "rgba(248, 250, 252, 0.98)",
+    chatInputBackground: "rgba(255, 255, 255, 0.95)",
 
     // Orb effect
-    orbHue: 210,
-    gradientFrom: "#3b82f6",
-    gradientTo: "#8b5cf6",
+    orbHue: 240,
+    gradientFrom: "#4f46e5",
+    gradientTo: "#6366f1",
 
     // Skeleton loaders
-    skeletonBase: "rgba(226, 232, 240, 0.6)",
-    skeletonHighlight: "rgba(241, 245, 249, 0.8)",
+    skeletonBase: "rgba(226, 232, 240, 0.7)",
+    skeletonHighlight: "rgba(241, 245, 249, 0.9)",
   },
 };
 

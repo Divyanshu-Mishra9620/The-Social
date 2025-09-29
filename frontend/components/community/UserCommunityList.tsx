@@ -27,7 +27,7 @@ async function serverActionRequest(
 }
 
 export function UserCommunityList({ communities }: { communities: Server[] }) {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { data: session } = useSession();
   const router = useRouter();
@@ -79,8 +79,13 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
 
   return (
     <div className="flex flex-col h-full p-4">
-      <h2 className="mb-4 text-lg font-semibold">Your Communities</h2>
-      <ul className="space-y-2 no-scrollbar flex-1 overflow-y-auto">
+      <h2
+        className="mb-4 text-sm font-semibold uppercase tracking-wider px-2"
+        style={{ color: colors.textTertiary }}
+      >
+        Your Communities
+      </h2>
+      <ul className="space-y-1 no-scrollbar flex-1 overflow-y-auto">
         {communities?.map((community) => {
           const isMember = getMembershipStatus(community);
           const isOwner = community.owner._id === user?.id;
@@ -91,44 +96,46 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
           return (
             <li
               key={community._id}
-              className="flex items-center justify-between gap-3"
+              className="flex items-center justify-between gap-2"
             >
               <motion.button
                 onClick={() => router.push(`/community/${community._id}`)}
-                className={`relative flex flex-1 items-center gap-3 rounded-lg p-3 text-left transition-all duration-200 overflow-hidden ${
+                style={{
+                  backgroundColor:
+                    selectedCommunityId === community._id
+                      ? colors.surfaceActive
+                      : "transparent",
+                  borderColor:
+                    selectedCommunityId === community._id
+                      ? colors.border
+                      : "transparent",
+                }}
+                className={`relative flex flex-1 items-center gap-3 rounded-xl p-3 text-left transition-all duration-200 overflow-hidden ${
                   selectedCommunityId === community._id
-                    ? theme === "light"
-                      ? "bg-black/10"
-                      : "bg-white/10"
-                    : theme === "light"
-                    ? "hover:bg-black/5"
-                    : "hover:bg-white/5"
+                    ? "border"
+                    : "hover:bg-opacity-50"
                 }`}
+                whileHover={{ backgroundColor: colors.hover }}
               >
                 <img
                   src={community.imageUrl || "/default-avatar.png"}
                   alt={community.name}
-                  className="h-10 w-10 rounded-full object-cover"
+                  className="h-10 w-10 rounded-lg object-cover ring-1 ring-black/5" // ringColor is not a valid style property
                 />
 
-                <div>
+                <div className="flex-1 min-w-0">
                   <p
-                    className={`font-semibold ${
-                      theme === "light"
-                        ? "text-neutral-800"
-                        : "text-neutral-100"
-                    }`}
+                    className="font-semibold text-sm truncate"
+                    style={{ color: colors.textPrimary }}
                   >
                     {community.name}
                   </p>
                   <p
-                    className={`mt-1 truncate text-sm ${
-                      theme === "light"
-                        ? "text-neutral-600"
-                        : "text-neutral-400"
-                    }`}
+                    className="text-xs truncate"
+                    style={{ color: colors.textTertiary }}
                   >
-                    Members: {community.members.length}
+                    {community.members.length}{" "}
+                    {community.members.length === 1 ? "member" : "members"}
                   </p>
                 </div>
               </motion.button>
@@ -139,7 +146,11 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
                   <button
                     onClick={() => handleCommunityAction(community, "join")}
                     disabled={isMutating}
-                    className="rounded-lg px-3 py-1 text-sm font-semibold transition disabled:opacity-50 bg-blue-500/10 text-blue-600 hover:bg-blue-500/20"
+                    style={{
+                      backgroundColor: colors.primary,
+                      color: "#ffffff",
+                    }}
+                    className="rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 disabled:opacity-50 hover:scale-105"
                   >
                     Join
                   </button>
