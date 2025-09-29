@@ -6,20 +6,21 @@ import { useTheme } from "../ThemeProvider";
 interface OrbProps {
   intensity?: number;
   speed?: number;
-  complexity?: number;
   interactive?: boolean;
 }
 
 export default function EnhancedOrb({
-  intensity = 1.0,
-  speed = 1.0,
-  complexity = 1.0,
-  interactive = true,
+  intensity,
+  speed = 0.3,
+  interactive = false,
 }: OrbProps) {
   const ctnDom = useRef<HTMLDivElement>(null);
   const { colors } = useTheme();
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [isHovered, setIsHovered] = useState(false);
+
+  // Use theme-based intensity if not provided
+  const effectiveIntensity = intensity ?? colors.orbIntensity;
 
   const vertexShader = `
     precision highp float;
@@ -40,7 +41,6 @@ export default function EnhancedOrb({
     uniform float hue;
     uniform float intensity;
     uniform float speed;
-    uniform float complexity;
     uniform vec2 mouse;
     uniform float hover;
     varying vec2 vUv;
@@ -90,9 +90,9 @@ export default function EnhancedOrb({
     float fbm(vec3 p, int octaves) {
       float value = 0.0;
       float amplitude = 0.5;
-      float frequency = 1.0;
+      float frequency = 0.8;
       
-      for (int i = 0; i < 8; i++) {
+      for (int i = 0; i < 4; i++) {
         if (i >= octaves) break;
         value += amplitude * snoise3(p * frequency);
         amplitude *= 0.5;
@@ -112,59 +112,52 @@ export default function EnhancedOrb({
     }
     
     vec4 draw(vec2 uv) {
-      // Mouse influence
-      vec2 mouseInfluence = (mouse - 0.5) * 2.0 * hover * 0.3;
+      // Subtle mouse influence
+      vec2 mouseInfluence = (mouse - 0.5) * hover * 0.15;
       uv += mouseInfluence;
       
       float len = length(uv);
-      float angle = atan(uv.y, uv.x);
       
-      // Dynamic noise with multiple octaves
+      // Slow, subtle animation
       float timeOffset = iTime * speed;
-      vec3 noisePos = vec3(uv * complexity, timeOffset);
+      vec3 noisePos = vec3(uv * 0.8, timeOffset);
       
-      float noise1 = fbm(noisePos, 4);
-      float noise2 = fbm(noisePos * 2.0 + vec3(100.0), 3);
-      float noise3 = fbm(noisePos * 0.5 + vec3(200.0), 2);
+      float noise1 = fbm(noisePos, 3);
+      float noise2 = fbm(noisePos * 1.5 + vec3(100.0), 2);
       
-      // Create dynamic radius
-      float baseRadius = 0.4 + 0.2 * sin(timeOffset * 0.5);
-      float dynamicRadius = baseRadius + 0.15 * noise1 + 0.1 * noise2;
+      // Gentle, organic radius
+      float baseRadius = 0.5 + 0.12 * sin(timeOffset * 0.3);
+      float dynamicRadius = baseRadius + 0.08 * noise1;
       
-      // Multiple energy sources
-      vec2 pos1 = vec2(cos(timeOffset * 0.7), sin(timeOffset * 0.7)) * 0.3;
-      vec2 pos2 = vec2(cos(timeOffset * -0.5 + 2.0), sin(timeOffset * -0.5 + 2.0)) * 0.2;
-      vec2 pos3 = vec2(cos(timeOffset * 0.3 + 4.0), sin(timeOffset * 0.3 + 4.0)) * 0.4;
+      // Multiple soft energy sources
+      vec2 pos1 = vec2(cos(timeOffset * 0.4), sin(timeOffset * 0.4)) * 0.25;
+      vec2 pos2 = vec2(cos(timeOffset * -0.3 + 2.0), sin(timeOffset * -0.3 + 2.0)) * 0.2;
       
       float d1 = distance(uv, pos1);
       float d2 = distance(uv, pos2);
-      float d3 = distance(uv, pos3);
       
-      float energy1 = light(1.5 * intensity, 8.0, d1);
-      float energy2 = light(1.2 * intensity, 6.0, d2);
-      float energy3 = light(1.0 * intensity, 10.0, d3);
+      float energy1 = light(intensity * 1.2, 5.0, d1);
+      float energy2 = light(intensity * 0.8, 6.0, d2);
       
-      // Main orb shape
-      float orbMask = smoothstep(dynamicRadius * 1.2, dynamicRadius * 0.8, len);
-      float glow = smoothstep(1.0, 0.3, len);
+      // Soft orb shape
+      float orbMask = smoothstep(dynamicRadius * 1.4, dynamicRadius * 0.6, len);
+      float glow = smoothstep(1.2, 0.0, len);
       
-      // Color variations based on hue
-      vec3 color1 = hsv2rgb(vec3(hue / 360.0, 0.8, 0.9));
-      vec3 color2 = hsv2rgb(vec3((hue + 60.0) / 360.0, 0.7, 0.8));
-      vec3 color3 = hsv2rgb(vec3((hue + 120.0) / 360.0, 0.6, 0.7));
+      // Subtle color variations
+      vec3 color1 = hsv2rgb(vec3(hue / 360.0, 0.5, 0.6));
+      vec3 color2 = hsv2rgb(vec3((hue + 40.0) / 360.0, 0.4, 0.5));
       
-      // Combine colors with noise
-      vec3 finalColor = mix(color3, color1, orbMask);
-      finalColor = mix(finalColor, color2, energy1 * 0.5);
-      finalColor += color1 * energy2 * 0.3;
-      finalColor += color3 * energy3 * 0.2;
+      // Blend colors gently
+      vec3 finalColor = mix(color2, color1, orbMask * 0.7);
+      finalColor += color1 * energy1 * 0.3;
+      finalColor += color2 * energy2 * 0.2;
       
-      // Add noise variations
-      finalColor += vec3(noise2 * 0.1, noise3 * 0.08, noise1 * 0.12);
+      // Subtle noise variations
+      finalColor += vec3(noise2 * 0.05);
       finalColor *= glow;
       
-      // Interactive brightness boost
-      finalColor *= 1.0 + hover * 0.3;
+      // Minimal interactive brightness
+      finalColor *= 1.0 + hover * 0.15;
       
       finalColor = clamp(finalColor, 0.0, 1.0);
       
@@ -174,10 +167,11 @@ export default function EnhancedOrb({
     void main() {
       vec2 center = iResolution.xy * 0.5;
       float size = min(iResolution.x, iResolution.y);
-      vec2 uv = (vUv * iResolution.xy - center) / size * 2.0;
+      vec2 uv = (vUv * iResolution.xy - center) / size * 2.2;
       
       vec4 col = draw(uv);
-      gl_FragColor = vec4(col.rgb * col.a, col.a * 0.8);
+      // More transparent for subtlety
+      gl_FragColor = vec4(col.rgb * col.a, col.a * 0.5);
     }
   `;
 
@@ -204,9 +198,8 @@ export default function EnhancedOrb({
           ),
         },
         hue: { value: colors.orbHue },
-        intensity: { value: intensity },
+        intensity: { value: effectiveIntensity },
         speed: { value: speed },
-        complexity: { value: complexity },
         mouse: { value: [0.5, 0.5] },
         hover: { value: 0 },
       },
@@ -216,7 +209,7 @@ export default function EnhancedOrb({
 
     function resize() {
       if (!container) return;
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Limit DPR for performance
       const width = container.clientWidth;
       const height = container.clientHeight;
       renderer.setSize(width * dpr, height * dpr);
@@ -238,13 +231,8 @@ export default function EnhancedOrb({
       program.uniforms.mouse.value = [x, y];
     };
 
-    const handleMouseEnter = () => {
-      setIsHovered(true);
-    };
-
-    const handleMouseLeave = () => {
-      setIsHovered(false);
-    };
+    const handleMouseEnter = () => setIsHovered(true);
+    const handleMouseLeave = () => setIsHovered(false);
 
     window.addEventListener("resize", resize);
     if (interactive) {
@@ -263,14 +251,13 @@ export default function EnhancedOrb({
 
       program.uniforms.iTime.value = t * 0.001;
       program.uniforms.hue.value = colors.orbHue;
-      program.uniforms.intensity.value = intensity;
+      program.uniforms.intensity.value = effectiveIntensity;
       program.uniforms.speed.value = speed;
-      program.uniforms.complexity.value = complexity;
 
       // Smooth hover transition
       const targetHover = isHovered ? 1 : 0;
       program.uniforms.hover.value +=
-        (targetHover - program.uniforms.hover.value) * 0.05;
+        (targetHover - program.uniforms.hover.value) * 0.03;
 
       renderer.render({ scene: mesh });
     };
@@ -284,16 +271,21 @@ export default function EnhancedOrb({
         container.removeEventListener("mouseenter", handleMouseEnter);
         container.removeEventListener("mouseleave", handleMouseLeave);
       }
-      container.removeChild(gl.canvas);
+      if (container.contains(gl.canvas)) {
+        container.removeChild(gl.canvas);
+      }
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, [colors.orbHue, intensity, speed, complexity, interactive, isHovered]);
+  }, [colors.orbHue, effectiveIntensity, speed, interactive, isHovered]);
 
   return (
     <div
       ref={ctnDom}
-      className="absolute inset-0 w-full h-full pointer-events-auto"
-      style={{ zIndex: 0 }}
+      className="absolute inset-0 w-full h-full"
+      style={{
+        zIndex: 0,
+        pointerEvents: interactive ? "auto" : "none",
+      }}
     />
   );
 }
