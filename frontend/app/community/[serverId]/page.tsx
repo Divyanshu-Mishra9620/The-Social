@@ -3,15 +3,15 @@
 import { CommunityView } from "@/components/community/subComponents/communityDetail/CommunityView";
 import { useCommunity } from "@/context/CommunityContext";
 import { IconLoader2 } from "@tabler/icons-react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ServerPage({
   params,
 }: {
-  params: { serverId: string };
+  params: Promise<{ serverId: string; channelId: string }>;
 }) {
-  const { serverId } = params;
+  const { serverId } = React.use(params);
   const { server, isLoading } = useCommunity();
   const router = useRouter();
 

@@ -3,13 +3,15 @@
 import { CommunityView } from "@/components/community/subComponents/communityDetail/CommunityView";
 import { useCommunity } from "@/context/CommunityContext";
 import { IconLoader2 } from "@tabler/icons-react";
+import React from "react";
 
 export default function ChannelPage({
   params,
 }: {
-  params: { serverId: string; channelId: string };
+  params: Promise<{ serverId: string; channelId: string }>;
 }) {
-  const { channelId } = params;
+  const { serverId, channelId } = React.use(params);
+
   const { server, isLoading } = useCommunity();
 
   if (isLoading) {

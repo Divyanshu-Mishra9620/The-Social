@@ -71,6 +71,7 @@ export default function CommunityLayout({
   const communitiesToDisplay = searchTerm ? searchedCommunities : userServers;
   const isLoadingLists = searchTerm ? isSearchLoading : isUserServersLoading;
 
+  // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(
     () => ({
       server,
@@ -79,8 +80,13 @@ export default function CommunityLayout({
     [server, isServerLoading]
   );
 
-  const handleSearch = (searchInput: string) => setSearchTerm(searchInput);
-  const handleModelToggle = () => setIsModelOpen(!isModelOpen);
+  const handleSearch = useCallback((searchInput: string) => {
+    setSearchTerm(searchInput);
+  }, []);
+
+  const handleModelToggle = useCallback(() => {
+    setIsModelOpen((prev) => !prev);
+  }, []);
 
   return (
     <ThemeProvider>

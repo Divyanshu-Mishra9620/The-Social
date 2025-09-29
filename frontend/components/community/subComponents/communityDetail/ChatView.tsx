@@ -1,11 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import {
-  IconHash,
-  IconPaperclip,
-  IconSend,
-  IconLoader2,
-} from "@tabler/icons-react";
+import { IconHash, IconPaperclip, IconSend } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Channel, Server, Message } from "@/types/server";
 import { useSession } from "next-auth/react";
@@ -13,16 +8,66 @@ import { useChannelMessages } from "@/hooks/useChannelMessages";
 import { useSocket } from "@/hooks/useSocket";
 import { apiClient } from "@/lib/apiClient";
 import { formatDate } from "@/lib/utils";
+import { useTheme } from "@/components/community/ThemeProvider";
 
-const SkeletonMessage = () => (
-  <div className="flex animate-pulse items-start gap-3">
-    <div className="h-9 w-9 rounded-full bg-gray-300 dark:bg-gray-700" />
-    <div className="flex-1 space-y-2">
-      <div className="h-4 w-1/4 rounded bg-gray-300 dark:bg-gray-700" />
-      <div className="h-8 w-3/4 rounded bg-gray-300 dark:bg-gray-700" />
+const SkeletonMessage = () => {
+  const { colors } = useTheme();
+  return (
+    <div className="flex animate-pulse items-start gap-3">
+      <div
+        className="h-9 w-9 rounded-full"
+        style={{ backgroundColor: colors.skeletonBase }}
+      />
+      <div className="flex-1 space-y-2">
+        <div
+          className="h-4 w-24 rounded"
+          style={{ backgroundColor: colors.skeletonBase }}
+        />
+        <div
+          className="h-16 w-3/4 rounded-xl"
+          style={{ backgroundColor: colors.skeletonBase }}
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+const LoadingSkeleton = () => {
+  const { colors } = useTheme();
+  return (
+    <div className="space-y-6 px-6 py-4">
+      <div className="text-center">
+        <div
+          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: colors.surface,
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: colors.border,
+          }}
+        >
+          <IconHash
+            size={32}
+            className="animate-pulse"
+            style={{ color: colors.textTertiary }}
+          />
+        </div>
+        <div
+          className="mt-4 mx-auto h-8 w-48 rounded animate-pulse"
+          style={{ backgroundColor: colors.skeletonBase }}
+        />
+        <div
+          className="mt-2 mx-auto h-4 w-64 rounded animate-pulse"
+          style={{ backgroundColor: colors.skeletonBase }}
+        />
+      </div>
+      <SkeletonMessage />
+      <SkeletonMessage />
+      <SkeletonMessage />
+      <SkeletonMessage />
+    </div>
+  );
+};
 
 const MessageBubble = ({
   message,
@@ -30,46 +75,66 @@ const MessageBubble = ({
 }: {
   message: Message;
   isOwnMessage: boolean;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    layout
-    className={`flex items-start gap-3 ${
-      isOwnMessage ? "flex-row-reverse" : ""
-    }`}
-  >
-    <img
-      src={message.sender.profilePic || "/default-avatar.png"}
-      alt={message.sender.name}
-      className="h-9 w-9 rounded-full object-cover"
-    />
-    <div
-      className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}
+}) => {
+  const { colors } = useTheme();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      layout
+      className={`flex items-start gap-3 ${
+        isOwnMessage ? "flex-row-reverse" : ""
+      }`}
     >
-      <div className="flex items-center gap-2">
-        {!isOwnMessage && (
-          <span className="text-sm font-semibold text-[color:var(--color-chat-view-foreground)]">
-            {message.sender.name}
-          </span>
-        )}
-        <span className="text-xs text-neutral-500">
-          {formatDate(message.createdAt)}
-        </span>
-      </div>
+      <img
+        src={message.sender.profilePic || "/default-avatar.png"}
+        alt={message.sender.name}
+        className="h-9 w-9 rounded-full object-cover ring-2 ring-offset-2"
+        style={{
+          // @ts-ignore
+          ringColor: colors.border,
+          ringOffsetColor: colors.background,
+        }}
+      />
       <div
-        className={`mt-1 max-w-lg break-words rounded-xl px-4 py-2.5 text-sm ${
-          isOwnMessage
-            ? "rounded-br-none bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-            : "rounded-bl-none bg-neutral-800 text-neutral-200"
+        className={`flex flex-col ${
+          isOwnMessage ? "items-end" : "items-start"
         }`}
       >
-        <p>{message.content}</p>
+        <div className="flex items-center gap-2 mb-1">
+          {!isOwnMessage && (
+            <span
+              className="text-sm font-semibold"
+              style={{ color: colors.textPrimary }}
+            >
+              {message.sender.name}
+            </span>
+          )}
+          <span className="text-xs" style={{ color: colors.textMuted }}>
+            {formatDate(message.createdAt)}
+          </span>
+        </div>
+        <div
+          className={`mt-1 max-w-lg break-words rounded-xl px-4 py-2.5 text-sm shadow-sm ${
+            isOwnMessage ? "rounded-br-none text-white" : "rounded-bl-none"
+          }`}
+          style={
+            isOwnMessage
+              ? { background: colors.chatBubbleOwn }
+              : {
+                  backgroundColor: colors.chatBubbleOther,
+                  color: colors.textPrimary,
+                }
+          }
+        >
+          <p>{message.content}</p>
+        </div>
       </div>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 export const ChatView = ({
   channel,
@@ -79,6 +144,7 @@ export const ChatView = ({
   server: Server;
 }) => {
   const { data: session } = useSession();
+  const { colors } = useTheme();
   const { messages: initialMessages, isLoading } = useChannelMessages(
     channel._id
   );
@@ -86,7 +152,17 @@ export const ChatView = ({
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevChannelIdRef = useRef<string>(null);
+
+  // Reset messages when channel changes
+  useEffect(() => {
+    if (prevChannelIdRef.current !== channel._id) {
+      setMessages([]);
+      prevChannelIdRef.current = channel._id;
+    }
+  }, [channel._id]);
 
   useEffect(() => {
     if (initialMessages) {
@@ -123,10 +199,11 @@ export const ChatView = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !session?.appJwt) return;
+    if (!newMessage.trim() || !session?.appJwt || isSending) return;
 
     const contentToSend = newMessage;
     setNewMessage("");
+    setIsSending(true);
 
     try {
       const formData = new FormData();
@@ -141,28 +218,43 @@ export const ChatView = ({
     } catch (error) {
       console.error("Failed to send message:", error);
       setNewMessage(contentToSend);
+    } finally {
+      setIsSending(false);
     }
   };
 
   return (
-    <div className="relative flex h-full flex-col bg-[color:var(--color-chat-view-background)] text-[color:var(--color-chat-view-foreground)]">
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+    <div
+      className="relative flex h-full flex-col"
+      style={{ backgroundColor: colors.chatBackground }}
+    >
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="space-y-6">
-            <SkeletonMessage />
-            <SkeletonMessage />
-            <SkeletonMessage />
-          </div>
+          <LoadingSkeleton />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6 px-6 py-4">
             <div className="text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/20">
-                <IconHash size={32} className="text-neutral-400" />
+              <div
+                className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: colors.surface,
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: colors.border,
+                }}
+              >
+                <IconHash size={32} style={{ color: colors.textTertiary }} />
               </div>
-              <h2 className="mt-4 text-2xl font-bold">
+              <h2
+                className="mt-4 text-2xl font-bold"
+                style={{ color: colors.textPrimary }}
+              >
                 Welcome to #{channel.name}!
               </h2>
-              <p className="mt-1 text-sm text-neutral-400">
+              <p
+                className="mt-1 text-sm"
+                style={{ color: colors.textTertiary }}
+              >
                 This is the beginning of this channel.
               </p>
             </div>
@@ -184,11 +276,35 @@ export const ChatView = ({
       <div className="shrink-0 p-4">
         <form
           onSubmit={handleSendMessage}
-          className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-2 shadow-lg backdrop-blur-xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/50"
+          className="flex items-center gap-3 rounded-xl p-2 shadow-lg backdrop-blur-xl transition-all duration-200"
+          style={{
+            backgroundColor: colors.chatInputBackground,
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: colors.border,
+            outline: "none",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = colors.primary;
+            e.currentTarget.style.boxShadow = `0 0 0 3px ${colors.focus}`;
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = colors.border;
+            e.currentTarget.style.boxShadow = "none";
+          }}
         >
           <button
             type="button"
-            className="p-2 text-neutral-400 hover:text-white"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: colors.textTertiary }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = colors.hover;
+              e.currentTarget.style.color = colors.textSecondary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = colors.textTertiary;
+            }}
           >
             <IconPaperclip size={20} />
           </button>
@@ -197,12 +313,30 @@ export const ChatView = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message #${channel.name}`}
-            className="flex-1 bg-transparent text-sm placeholder:text-neutral-500 focus:outline-none"
+            disabled={isSending}
+            className="flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50"
+            style={{
+              color: colors.textPrimary,
+              caretColor: colors.primary,
+            }}
           />
           <button
             type="submit"
-            disabled={!newMessage.trim()}
-            className="rounded-lg bg-blue-600 p-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 hover:scale-105"
+            disabled={!newMessage.trim() || isSending}
+            className="rounded-lg p-2 text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              backgroundColor: colors.primary,
+            }}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = colors.primaryHover;
+                e.currentTarget.style.transform = "scale(1.05)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = colors.primary;
+              e.currentTarget.style.transform = "scale(1)";
+            }}
           >
             <IconSend size={18} />
           </button>

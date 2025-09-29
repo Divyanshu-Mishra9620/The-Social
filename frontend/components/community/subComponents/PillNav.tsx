@@ -6,10 +6,10 @@ import { IconSearch, IconPlus, IconPalette } from "@tabler/icons-react";
 import { useTheme } from "../ThemeProvider";
 
 const ThemeToggle = () => {
-  const { nextTheme, colors } = useTheme();
+  const { toggleTheme, colors } = useTheme();
   return (
     <button
-      onClick={nextTheme}
+      onClick={toggleTheme}
       style={{
         backgroundColor: colors.surface,
         borderColor: colors.border,
@@ -28,9 +28,9 @@ const CreateCommunityButton = ({ onClick }: { onClick?: () => void }) => {
     <button
       onClick={onClick}
       style={{
-        backgroundColor: colors.primary,
-        color: colors.text,
-        boxShadow: `0 4px 14px 0 ${colors.primary}55`,
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        color: colors.textSecondary,
       }}
       className="relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-full px-3 md:px-5 font-medium shadow-lg transition-all duration-300 hover:scale-105 focus:outline-none"
     >
@@ -66,7 +66,7 @@ const SearchComponent = ({
         style={{
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          color: colors.text,
+          color: colors.textSecondary,
         }}
         className="h-10 w-48 rounded-full border bg-transparent pl-9 pr-4 text-sm backdrop-blur-sm transition-all duration-300 placeholder:text-neutral-500 focus:w-60 focus:outline-none focus:ring-2"
       />
@@ -83,15 +83,15 @@ const PillNav: React.FC<any> = ({
   const { colors } = useTheme();
   return (
     <motion.nav
-      initial={{ y: -100, opacity: 0 }}
+      initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
       style={{
-        backgroundColor: colors.surface,
+        background: `linear-gradient(135deg, ${colors.surface} 0%, ${colors.surfaceHover} 100%)`,
         borderColor: colors.border,
-        boxShadow: `0 4px 30px ${colors.background}55`,
+        boxShadow: `0 8px 24px ${colors.background}aa`,
       }}
-      className="relative z-50 flex w-full items-center justify-between rounded-full border p-2 shadow-lg backdrop-blur-xl"
+      className="relative z-50 flex w-full items-center justify-between rounded-2xl border px-4 py-2 shadow-lg backdrop-blur-2xl"
     >
       <Link href="/" className="ml-2 flex-shrink-0">
         <motion.img

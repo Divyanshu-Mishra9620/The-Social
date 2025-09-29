@@ -1,11 +1,16 @@
 "use client";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import {
   IconHash,
   IconVolume,
   IconSettings,
   IconChevronDown,
-  IconX,
   IconChevronRight,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
@@ -29,7 +34,13 @@ const useResizable = (initialWidth: number) => {
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isResizing.current) {
-      setWidth((prevWidth) => prevWidth + e.movementX);
+      setWidth((prevWidth) => {
+        const newWidth = prevWidth + e.movementX;
+        if (newWidth > 180 && newWidth < 400) {
+          return newWidth;
+        }
+        return prevWidth;
+      });
     }
   }, []);
 
@@ -131,7 +142,9 @@ export const CommunityView = ({
   initialChannelId?: string;
 }) => {
   const router = useRouter();
-  const [activeChannel, setActiveChannel] = useState<Channel | null>(() => {
+
+  // Memoize the initial channel to prevent recalculation
+  const initialChannel = useMemo(() => {
     if (initialChannelId) {
       for (const category of community.categories) {
         const foundChannel = category.channels.find(
@@ -141,14 +154,31 @@ export const CommunityView = ({
       }
     }
     return community.categories[0]?.channels[0] || null;
-  });
+  }, [initialChannelId, community.categories]);
+
+  const [activeChannel, setActiveChannel] = useState<Channel | null>(
+    initialChannel
+  );
 
   const { width, handleMouseDown } = useResizable(240);
 
-  const handleChannelSelect = (channel: Channel) => {
-    setActiveChannel(channel);
-    router.push(`/community/${community._id}/${channel._id}`);
-  };
+  // Update active channel when initialChannelId changes
+  useEffect(() => {
+    if (initialChannelId && activeChannel?._id !== initialChannelId) {
+      const newChannel = initialChannel;
+      if (newChannel) {
+        setActiveChannel(newChannel);
+      }
+    }
+  }, [initialChannelId, initialChannel, activeChannel]);
+
+  const handleChannelSelect = useCallback(
+    (channel: Channel) => {
+      setActiveChannel(channel);
+      router.push(`/community/${community._id}/${channel._id}`);
+    },
+    [community._id, router]
+  );
 
   return (
     <div className="flex h-full w-full">
@@ -183,19 +213,23 @@ export const CommunityView = ({
           </div>
           <IconSettings
             size={20}
-            className="text-neutral-400 hover:text-white"
+            className="text-neutral-400 hover:text-white cursor-pointer"
           />
         </footer>
       </div>
       <div
-        className="cursor-col-resize w-2 bg-gray-400 hover:bg-gray-500"
+        className="cursor-col-resize w-2 bg-transparent hover:bg-white/10 transition-colors"
         onMouseDown={handleMouseDown}
       />
 
       <div className="flex flex-1 flex-col min-h-0">
         <main className="flex-1 min-h-0">
           {activeChannel ? (
-            <ChatView channel={activeChannel} server={community} />
+            <ChatView
+              key={activeChannel._id}
+              channel={activeChannel}
+              server={community}
+            />
           ) : (
             <div className="flex h-full flex-col items-center justify-center text-center p-8">
               <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-black/20 border border-white/10 mb-4">
