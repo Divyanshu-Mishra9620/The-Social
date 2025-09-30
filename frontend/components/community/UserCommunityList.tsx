@@ -77,10 +77,14 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
     return community.members.some((member: any) => member.user === user?.id);
   };
 
+  const handleCommunityClick = (community: Server) => {
+    router.push(`/community/${community._id}`);
+  };
+
   return (
     <div className="flex flex-col h-full p-4">
       <h2
-        className="mb-4 text-sm font-semibold uppercase tracking-wider px-2"
+        className="mb-4 text-sm font-semibold uppercase tracking-wider px-2 contained overflow-auto overflow-hidden"
         style={{ color: colors.textTertiary }}
       >
         Your Communities
@@ -88,7 +92,7 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
       <ul className="space-y-1 no-scrollbar flex-1 overflow-y-auto">
         {communities?.map((community) => {
           const isMember = getMembershipStatus(community);
-          const isOwner = community.owner._id === user?.id;
+          const isOwner = community?.owner?._id === user?.id;
 
           if (community.visibility === "private" && !isMember && !isOwner)
             return null;
@@ -99,7 +103,7 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
               className="flex items-center justify-between gap-2"
             >
               <motion.button
-                onClick={() => router.push(`/community/${community._id}`)}
+                onClick={() => handleCommunityClick(community)}
                 style={{
                   backgroundColor:
                     selectedCommunityId === community._id
@@ -120,7 +124,7 @@ export function UserCommunityList({ communities }: { communities: Server[] }) {
                 <img
                   src={community.imageUrl || "/default-avatar.png"}
                   alt={community.name}
-                  className="h-10 w-10 rounded-lg object-cover ring-1 ring-black/5" // ringColor is not a valid style property
+                  className="h-10 w-10 rounded-lg object-cover ring-1 ring-black/5"
                 />
 
                 <div className="flex-1 min-w-0">

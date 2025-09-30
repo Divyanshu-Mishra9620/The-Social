@@ -3,7 +3,8 @@
 import { useUserServers } from "@/hooks/useUserServers";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { IconLoader2, IconMessage } from "@tabler/icons-react";
+import { IconMessage } from "@tabler/icons-react";
+import { BrandedLoader, EmptyState } from "@/components/Loaders";
 
 export default function CommunityRedirectPage() {
   const { userServers, isLoading } = useUserServers();
@@ -18,18 +19,20 @@ export default function CommunityRedirectPage() {
   if (isLoading) {
     return (
       <div className="flex h-full w-full items-center justify-center">
-        <IconLoader2 className="animate-spin" size={40} />
+        <BrandedLoader size={64} />
       </div>
     );
   }
 
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="text-center">
-        <IconMessage size={48} className="mx-auto text-gray-500" />
-        <h2 className="mt-4 text-2xl font-bold">Welcome to your @me page</h2>
-        <p className="mt-2 text-gray-500">Select a server to start chatting.</p>
-      </div>
-    </div>
-  );
+  if (userServers.length === 0) {
+    return (
+      <EmptyState
+        icon={<IconMessage size={48} className="text-gray-400" />}
+        title="Welcome!"
+        description="You haven't joined any communities yet. Find one to join or create your own to get started."
+      />
+    );
+  }
+
+  return null;
 }

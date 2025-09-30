@@ -11,116 +11,95 @@ import {
 type Theme = "light" | "dark";
 
 interface ThemeColors {
-  // Primary colors with proper contrast
   primary: string;
   primaryHover: string;
   primaryActive: string;
 
-  // Secondary colors
   secondary: string;
   secondaryHover: string;
 
-  // Accent colors
   accent: string;
   accentHover: string;
 
-  // Background layers (from back to front) - WCAG AAA compliant
   background: string;
   backgroundSecondary: string;
   surface: string;
   surfaceHover: string;
   surfaceActive: string;
 
-  // Text hierarchy with proper contrast ratios
-  textPrimary: string; // Main text - 16:1 contrast
-  textSecondary: string; // Secondary text - 10:1 contrast
-  textTertiary: string; // Tertiary text - 7:1 contrast
-  textMuted: string; // Muted text - 4.5:1 contrast
+  textPrimary: string;
+  textSecondary: string;
+  textTertiary: string;
+  textMuted: string;
 
-  // Borders and dividers
   border: string;
   borderHover: string;
   divider: string;
 
-  // Status colors (consistent across themes)
   success: string;
   warning: string;
   error: string;
   info: string;
 
-  // Interactive states
   hover: string;
   active: string;
   focus: string;
 
-  // Chat-specific
   chatBackground: string;
   chatBubbleOwn: string;
   chatBubbleOther: string;
   chatInputBackground: string;
 
-  // Orb effect (more subtle)
   orbHue: number;
   orbIntensity: number;
   gradientFrom: string;
   gradientTo: string;
 
-  // Skeleton loaders
   skeletonBase: string;
   skeletonHighlight: string;
 }
 
 const themeConfigs: Record<Theme, ThemeColors> = {
   dark: {
-    // Primary - Professional indigo with excellent visibility
     primary: "#6366f1",
     primaryHover: "#5558e3",
     primaryActive: "#4338ca",
 
-    // Secondary - Complementary purple
     secondary: "#8b5cf6",
     secondaryHover: "#7c3aed",
 
-    // Accent - Vibrant cyan
     accent: "#06b6d4",
     accentHover: "#0891b2",
 
-    // Backgrounds - Deep, rich blacks with subtle variations
     background: "#0a0a0b",
     backgroundSecondary: "#111113",
     surface: "#1a1a1d",
     surfaceHover: "#222226",
     surfaceActive: "#2a2a2f",
 
-    // Text - High contrast, WCAG AAA compliant
-    textPrimary: "#f5f5f7", // 18.5:1 contrast
-    textSecondary: "#d1d1d6", // 12.1:1 contrast
-    textTertiary: "#a1a1aa", // 7.8:1 contrast
-    textMuted: "#71717a", // 4.8:1 contrast
+    textPrimary: "#f5f5f7",
+    textSecondary: "#d1d1d6",
+    textTertiary: "#a1a1aa",
+    textMuted: "#71717a",
 
-    // Borders - Clear separation without harshness
     border: "rgba(255, 255, 255, 0.12)",
     borderHover: "rgba(255, 255, 255, 0.18)",
     divider: "rgba(255, 255, 255, 0.08)",
 
-    // Status colors
     success: "#10b981",
     warning: "#f59e0b",
     error: "#ef4444",
     info: "#3b82f6",
 
-    // Interactive states
     hover: "rgba(255, 255, 255, 0.06)",
     active: "rgba(255, 255, 255, 0.12)",
     focus: "rgba(99, 102, 241, 0.4)",
 
-    // Chat-specific
     chatBackground: "rgba(10, 10, 11, 0.6)",
     chatBubbleOwn: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
     chatBubbleOther: "#222226",
     chatInputBackground: "#1a1a1d",
 
-    // Orb - Subtle and professional
     orbHue: 245,
     orbIntensity: 0.4,
     gradientFrom: "#6366f1",
@@ -132,63 +111,63 @@ const themeConfigs: Record<Theme, ThemeColors> = {
   },
 
   light: {
-    // Primary - Professional indigo
-    primary: "#6366f1",
-    primaryHover: "#5558e3",
-    primaryActive: "#4338ca",
+    // Primary - Vibrant blue that works on light backgrounds
+    primary: "#4f46e5",
+    primaryHover: "#4338ca",
+    primaryActive: "#3730a3",
 
-    // Secondary - Refined purple
-    secondary: "#8b5cf6",
-    secondaryHover: "#7c3aed",
+    // Secondary - Rich purple
+    secondary: "#7c3aed",
+    secondaryHover: "#6d28d9",
 
-    // Accent - Professional cyan
-    accent: "#06b6d4",
-    accentHover: "#0891b2",
+    // Accent - Teal accent
+    accent: "#0891b2",
+    accentHover: "#0e7490",
 
-    // Backgrounds - Clean whites with subtle variations
+    // Backgrounds - Clean, professional whites
     background: "#ffffff",
     backgroundSecondary: "#fafafa",
-    surface: "#f5f5f5",
-    surfaceHover: "#eeeeee",
-    surfaceActive: "#e8e8e8",
+    surface: "#f8f9fa",
+    surfaceHover: "#f1f3f5",
+    surfaceActive: "#e9ecef",
 
-    // Text - High contrast, WCAG AAA compliant
-    textPrimary: "#09090b", // 19.3:1 contrast
-    textSecondary: "#3f3f46", // 11.8:1 contrast
-    textTertiary: "#71717a", // 7.2:1 contrast
-    textMuted: "#a1a1aa", // 4.6:1 contrast
+    // Text - FIXED: High contrast for excellent readability
+    textPrimary: "#111827", // Deep gray-black for main text
+    textSecondary: "#374151", // Dark gray for secondary text
+    textTertiary: "#6b7280", // Medium gray for tertiary text
+    textMuted: "#9ca3af", // Light gray for muted text
 
-    // Borders - Clear but not harsh
-    border: "rgba(0, 0, 0, 0.12)",
-    borderHover: "rgba(0, 0, 0, 0.18)",
-    divider: "rgba(0, 0, 0, 0.08)",
+    // Borders - Visible but subtle
+    border: "#e5e7eb",
+    borderHover: "#d1d5db",
+    divider: "#f3f4f6",
 
     // Status colors
-    success: "#10b981",
-    warning: "#f59e0b",
-    error: "#ef4444",
-    info: "#3b82f6",
+    success: "#059669",
+    warning: "#d97706",
+    error: "#dc2626",
+    info: "#2563eb",
 
     // Interactive states
     hover: "rgba(0, 0, 0, 0.04)",
     active: "rgba(0, 0, 0, 0.08)",
-    focus: "rgba(99, 102, 241, 0.3)",
+    focus: "rgba(79, 70, 229, 0.2)",
 
     // Chat-specific
-    chatBackground: "rgba(255, 255, 255, 0.4)",
-    chatBubbleOwn: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-    chatBubbleOther: "#f5f5f5",
+    chatBackground: "#fafafa",
+    chatBubbleOwn: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+    chatBubbleOther: "#ffffff",
     chatInputBackground: "#ffffff",
 
-    // Orb - Subtle and professional
+    // Orb - Subtle and elegant
     orbHue: 240,
-    orbIntensity: 0.3,
-    gradientFrom: "#6366f1",
-    gradientTo: "#8b5cf6",
+    orbIntensity: 0.25,
+    gradientFrom: "#4f46e5",
+    gradientTo: "#7c3aed",
 
     // Skeleton loaders
-    skeletonBase: "#eeeeee",
-    skeletonHighlight: "#f5f5f5",
+    skeletonBase: "#e5e7eb",
+    skeletonHighlight: "#f3f4f6",
   },
 };
 

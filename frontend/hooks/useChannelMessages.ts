@@ -1,7 +1,14 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { Message } from "@/types/server";
 import { useSession } from "next-auth/react";
 import { apiClient } from "@/lib/apiClient";
+
+const messageCache = new Map<
+  string,
+  { messages: Message[]; timestamp: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000;
 
 export const useChannelMessages = (channelId: string | undefined) => {
   const { data: session } = useSession();
@@ -9,74 +16,87 @@ export const useChannelMessages = (channelId: string | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Track the last fetched channel to prevent duplicate fetches
-  const lastFetchedChannelRef = useRef<string | undefined>(null);
-  const isFetchingRef = useRef(false);
+  const currentChannelIdRef = useRef<string | undefined>(channelId);
 
   useEffect(() => {
-    const fetchMessages = async () => {
+    currentChannelIdRef.current = channelId;
+
+    setMessages([]);
+    setIsLoading(true);
+    setError(null);
+  }, [channelId]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadMessages = async () => {
       if (!channelId || !session?.appJwt) {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setMessages([]);
+          setIsLoading(false);
+        }
         return;
       }
 
-      // Prevent duplicate fetches for the same channel
-      if (
-        lastFetchedChannelRef.current === channelId ||
-        isFetchingRef.current
-      ) {
+      if (currentChannelIdRef.current !== channelId) {
         return;
       }
 
       try {
-        setIsLoading(true);
-        setError(null);
-        isFetchingRef.current = true;
-
-        console.log("🔍 Fetching messages for channel:", channelId);
-
-        const data = await apiClient(
-          `${process.env.NEXT_PUBLIC_BACKEND_URI}/api/v1/message/get-messages/${channelId}`,
-          session.appJwt,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+        const cached = messageCache.get(channelId);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+          if (!isCancelled && currentChannelIdRef.current === channelId) {
+            setMessages(cached.messages);
+            setIsLoading(false);
           }
-        );
-
-        console.log("✅ Messages API response data:", data);
-
-        if (data.messages) {
-          setMessages(data.messages);
-        } else if (Array.isArray(data)) {
-          setMessages(data);
-        } else {
-          console.warn("⚠️ Unexpected response format:", data);
-          setMessages([]);
+          return;
         }
 
-        lastFetchedChannelRef.current = channelId;
-      } catch (err) {
-        console.error("❌ Error fetching messages:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load messages"
+        console.log("🔍 Fetching messages for channel:", channelId);
+        const data = await apiClient(
+          `${process.env.NEXT_PUBLIC_BACKEND_URI}/api/v1/message/get-messages/${channelId}`,
+          session.appJwt
         );
-        setMessages([]);
+
+        if (!isCancelled && currentChannelIdRef.current === channelId) {
+          const fetchedMessages =
+            data.messages || (Array.isArray(data) ? data : []);
+
+          const sortedMessages = fetchedMessages.sort(
+            (a: Message, b: Message) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+
+          messageCache.set(channelId, {
+            messages: sortedMessages,
+            timestamp: Date.now(),
+          });
+          setMessages(sortedMessages);
+          console.log(
+            "✅ Messages loaded successfully:",
+            sortedMessages.length
+          );
+        }
+      } catch (err) {
+        if (!isCancelled && currentChannelIdRef.current === channelId) {
+          console.error("❌ Error fetching messages:", err);
+          setError(
+            err instanceof Error ? err.message : "Failed to load messages"
+          );
+        }
       } finally {
-        setIsLoading(false);
-        isFetchingRef.current = false;
+        if (!isCancelled && currentChannelIdRef.current === channelId) {
+          setIsLoading(false);
+        }
       }
     };
 
-    // Reset when channel changes
-    if (lastFetchedChannelRef.current !== channelId) {
-      setMessages([]);
-      lastFetchedChannelRef.current = undefined;
-    }
+    const timer = setTimeout(loadMessages, 50);
 
-    fetchMessages();
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
   }, [channelId, session?.appJwt]);
 
   return { messages, isLoading, error };

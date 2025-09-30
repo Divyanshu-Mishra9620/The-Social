@@ -1,39 +1,31 @@
 "use client";
 
-import { CommunityView } from "@/components/community/subComponents/communityDetail/CommunityView";
 import { useCommunity } from "@/context/CommunityContext";
-import { IconLoader2 } from "@tabler/icons-react";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { BrandedLoader } from "@/components/Loaders";
 
 export default function ServerPage({
   params,
 }: {
-  params: Promise<{ serverId: string; channelId: string }>;
+  params: { serverId: string };
 }) {
-  const { serverId } = React.use(params);
+  const { serverId } = params;
   const { server, isLoading } = useCommunity();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && server && server.categories[0]?.channels[0]) {
-      router.replace(
-        `/community/${serverId}/${server.categories[0].channels[0]._id}`
-      );
+    if (!isLoading && server) {
+      const firstChannel = server.categories[0]?.channels[0];
+      if (firstChannel) {
+        router.replace(`/community/${serverId}/${firstChannel._id}`);
+      }
     }
   }, [isLoading, server, serverId, router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <IconLoader2 className="animate-spin" size={40} />
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <p>Loading server...</p>
+      <BrandedLoader size={64} />
     </div>
   );
 }

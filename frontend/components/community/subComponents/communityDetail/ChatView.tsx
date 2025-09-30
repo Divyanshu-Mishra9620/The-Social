@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { IconHash, IconPaperclip, IconSend } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Channel, Server, Message } from "@/types/server";
@@ -9,6 +9,11 @@ import { useSocket } from "@/hooks/useSocket";
 import { apiClient } from "@/lib/apiClient";
 import { formatDate } from "@/lib/utils";
 import { useTheme } from "@/components/community/ThemeProvider";
+
+type ClientMessage = Message & {
+  tempId?: string;
+  status?: "sending" | "failed";
+};
 
 const SkeletonMessage = () => {
   const { colors } = useTheme();
@@ -73,7 +78,7 @@ const MessageBubble = ({
   message,
   isOwnMessage,
 }: {
-  message: Message;
+  message: ClientMessage;
   isOwnMessage: boolean;
 }) => {
   const { colors } = useTheme();
@@ -87,6 +92,7 @@ const MessageBubble = ({
       className={`flex items-start gap-3 ${
         isOwnMessage ? "flex-row-reverse" : ""
       }`}
+      style={{ opacity: message.status === "sending" ? 0.6 : 1 }}
     >
       <img
         src={message.sender.profilePic || "/default-avatar.png"}
@@ -113,7 +119,7 @@ const MessageBubble = ({
             </span>
           )}
           <span className="text-xs" style={{ color: colors.textMuted }}>
-            {formatDate(message.createdAt)}
+            {message.createdAt ? formatDate(message.createdAt) : "Sending..."}
           </span>
         </div>
         <div
@@ -150,18 +156,12 @@ export const ChatView = ({
   );
   const socket = useSocket(channel._id);
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ClientMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevChannelIdRef = useRef<string>(null);
 
-  // Reset messages when channel changes
   useEffect(() => {
-    if (prevChannelIdRef.current !== channel._id) {
-      setMessages([]);
-      prevChannelIdRef.current = channel._id;
-    }
+    setMessages([]);
   }, [channel._id]);
 
   useEffect(() => {
@@ -174,24 +174,35 @@ export const ChatView = ({
     }
   }, [initialMessages]);
 
+  const handleNewMessage = useCallback((newMessage: Message) => {
+    setMessages((prevMessages) => {
+      const optimisticIndex = prevMessages.findIndex(
+        (msg) => msg.tempId && msg.content === newMessage.content
+      );
+
+      if (optimisticIndex > -1) {
+        const updatedMessages = [...prevMessages];
+        updatedMessages[optimisticIndex] = newMessage;
+        return updatedMessages;
+      }
+
+      if (prevMessages.some((msg) => msg._id === newMessage._id)) {
+        return prevMessages;
+      }
+
+      return [...prevMessages, newMessage];
+    });
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
-
-    const handleNewMessage = (newMessage: Message) => {
-      setMessages((prevMessages) => {
-        if (prevMessages.some((msg) => msg._id === newMessage._id)) {
-          return prevMessages;
-        }
-        return [...prevMessages, newMessage];
-      });
-    };
 
     socket.on("message", handleNewMessage);
 
     return () => {
       socket.off("message", handleNewMessage);
     };
-  }, [socket]);
+  }, [socket, handleNewMessage]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -199,11 +210,28 @@ export const ChatView = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !session?.appJwt || isSending) return;
+    if (!newMessage.trim() || !session?.appJwt) return;
 
+    const tempId = Date.now().toString();
     const contentToSend = newMessage;
+
+    const optimisticMessage: ClientMessage = {
+      _id: tempId,
+      channel: channel._id,
+      content: contentToSend,
+      sender: {
+        _id: session.user.id,
+        name: session.user.name || "You",
+        profilePic: session.user.image || "/default-avatar.png",
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      tempId: tempId,
+      status: "sending",
+    };
+
+    setMessages((prev) => [...prev, optimisticMessage]);
     setNewMessage("");
-    setIsSending(true);
 
     try {
       const formData = new FormData();
@@ -217,9 +245,11 @@ export const ChatView = ({
       );
     } catch (error) {
       console.error("Failed to send message:", error);
-      setNewMessage(contentToSend);
-    } finally {
-      setIsSending(false);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.tempId === tempId ? { ...msg, status: "failed" } : msg
+        )
+      );
     }
   };
 
@@ -228,8 +258,14 @@ export const ChatView = ({
       className="relative flex h-full flex-col"
       style={{ backgroundColor: colors.chatBackground }}
     >
-      <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+        }}
+      >
+        {isLoading && messages.length === 0 ? (
           <LoadingSkeleton />
         ) : (
           <div className="space-y-6 px-6 py-4">
@@ -313,7 +349,6 @@ export const ChatView = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={`Message #${channel.name}`}
-            disabled={isSending}
             className="flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50"
             style={{
               color: colors.textPrimary,
@@ -322,7 +357,7 @@ export const ChatView = ({
           />
           <button
             type="submit"
-            disabled={!newMessage.trim() || isSending}
+            disabled={!newMessage.trim()}
             className="rounded-lg p-2 text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
             style={{
               backgroundColor: colors.primary,

@@ -19,7 +19,6 @@ export default function EnhancedOrb({
   const [mousePos, setMousePos] = useState({ x: 0.5, y: 0.5 });
   const [isHovered, setIsHovered] = useState(false);
 
-  // Use theme-based intensity if not provided
   const effectiveIntensity = intensity ?? colors.orbIntensity;
 
   const vertexShader = `
@@ -209,7 +208,7 @@ export default function EnhancedOrb({
 
     function resize() {
       if (!container) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Limit DPR for performance
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = container.clientWidth;
       const height = container.clientHeight;
       renderer.setSize(width * dpr, height * dpr);
@@ -254,7 +253,6 @@ export default function EnhancedOrb({
       program.uniforms.intensity.value = effectiveIntensity;
       program.uniforms.speed.value = speed;
 
-      // Smooth hover transition
       const targetHover = isHovered ? 1 : 0;
       program.uniforms.hover.value +=
         (targetHover - program.uniforms.hover.value) * 0.03;
