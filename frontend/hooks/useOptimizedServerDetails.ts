@@ -4,7 +4,7 @@ import { Server } from "@/types/server";
 
 const BACKEND_URI = process.env.NEXT_PUBLIC_BACKEND_URI;
 
-export function useServerDetails(serverId: string | null | undefined) {
+export function useOptimizedServerDetails(serverId: string | null | undefined) {
   const key = serverId
     ? `${BACKEND_URI}/api/v1/server/get-server/${serverId}`
     : null;

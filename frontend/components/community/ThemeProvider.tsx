@@ -6,168 +6,292 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useMemo,
 } from "react";
 
 type Theme = "light" | "dark";
 
 interface ThemeColors {
+  // Primary colors
   primary: string;
   primaryHover: string;
   primaryActive: string;
+  primaryLight: string;
 
+  // Secondary colors
   secondary: string;
   secondaryHover: string;
 
+  // Accent colors
   accent: string;
   accentHover: string;
 
+  // Background layers
   background: string;
   backgroundSecondary: string;
+  backgroundTertiary: string;
+
+  // Surface colors
   surface: string;
   surfaceHover: string;
   surfaceActive: string;
+  surfaceElevated: string;
 
+  // Text colors
   textPrimary: string;
   textSecondary: string;
   textTertiary: string;
   textMuted: string;
+  textLink: string;
 
+  // Border colors
   border: string;
   borderHover: string;
+  borderStrong: string;
   divider: string;
 
+  // Status colors
   success: string;
+  successLight: string;
   warning: string;
+  warningLight: string;
   error: string;
+  errorLight: string;
   info: string;
+  infoLight: string;
 
+  // Interactive states
   hover: string;
   active: string;
   focus: string;
 
+  // Chat specific
   chatBackground: string;
   chatBubbleOwn: string;
   chatBubbleOther: string;
+  chatBubbleOtherHover: string;
   chatInputBackground: string;
+  chatInputBorder: string;
 
+  // Sidebar specific
+  sidebarBackground: string;
+  sidebarHover: string;
+  sidebarActive: string;
+  sidebarDivider: string;
+
+  // Modal/Overlay
+  overlay: string;
+  modalBackground: string;
+  modalBorder: string;
+
+  // Orb visual effects
   orbHue: number;
   orbIntensity: number;
   gradientFrom: string;
   gradientTo: string;
 
+  // Skeleton loaders
   skeletonBase: string;
   skeletonHighlight: string;
+
+  // Mention/Highlight
+  mentionBackground: string;
+  mentionText: string;
+
+  // Online status
+  statusOnline: string;
+  statusIdle: string;
+  statusDnd: string;
+  statusOffline: string;
 }
 
 const themeConfigs: Record<Theme, ThemeColors> = {
   dark: {
-    primary: "#6366f1",
-    primaryHover: "#5558e3",
-    primaryActive: "#4338ca",
+    // Primary - Discord's blurple
+    primary: "#5865F2",
+    primaryHover: "#4752C4",
+    primaryActive: "#3C45A5",
+    primaryLight: "#5865F233",
 
+    // Secondary
     secondary: "#8b5cf6",
     secondaryHover: "#7c3aed",
 
-    accent: "#06b6d4",
-    accentHover: "#0891b2",
+    // Accent
+    accent: "#00aff4",
+    accentHover: "#0099dc",
 
-    background: "#0a0a0b",
-    backgroundSecondary: "#111113",
-    surface: "#1a1a1d",
-    surfaceHover: "#222226",
-    surfaceActive: "#2a2a2f",
+    // Backgrounds - Discord's dark theme
+    background: "#313338",
+    backgroundSecondary: "#2b2d31",
+    backgroundTertiary: "#1e1f22",
 
-    textPrimary: "#f5f5f7",
-    textSecondary: "#d1d1d6",
-    textTertiary: "#a1a1aa",
-    textMuted: "#71717a",
+    // Surfaces
+    surface: "#383a40",
+    surfaceHover: "#404249",
+    surfaceActive: "#4e505a",
+    surfaceElevated: "#2b2d31",
 
-    border: "rgba(255, 255, 255, 0.12)",
-    borderHover: "rgba(255, 255, 255, 0.18)",
-    divider: "rgba(255, 255, 255, 0.08)",
+    // Text - High contrast for dark mode
+    textPrimary: "#f2f3f5",
+    textSecondary: "#b5bac1",
+    textTertiary: "#949ba4",
+    textMuted: "#80848e",
+    textLink: "#00a8fc",
 
-    success: "#10b981",
-    warning: "#f59e0b",
-    error: "#ef4444",
-    info: "#3b82f6",
+    // Borders
+    border: "#26272b",
+    borderHover: "#3f4147",
+    borderStrong: "#4e505a",
+    divider: "#26272b",
 
-    hover: "rgba(255, 255, 255, 0.06)",
-    active: "rgba(255, 255, 255, 0.12)",
-    focus: "rgba(99, 102, 241, 0.4)",
+    // Status
+    success: "#23a55a",
+    successLight: "#23a55a33",
+    warning: "#f0b232",
+    warningLight: "#f0b23233",
+    error: "#f23f43",
+    errorLight: "#f23f4333",
+    info: "#5865F2",
+    infoLight: "#5865F233",
 
-    chatBackground: "rgba(10, 10, 11, 0.6)",
-    chatBubbleOwn: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-    chatBubbleOther: "#222226",
-    chatInputBackground: "#1a1a1d",
+    // Interactive
+    hover: "#35373c",
+    active: "#404249",
+    focus: "#5865F240",
 
-    orbHue: 245,
-    orbIntensity: 0.4,
-    gradientFrom: "#6366f1",
-    gradientTo: "#8b5cf6",
+    // Chat
+    chatBackground: "#313338",
+    chatBubbleOwn: "linear-gradient(135deg, #5865F2 0%, #7289da 100%)",
+    chatBubbleOther: "#2b2d31",
+    chatBubbleOtherHover: "#32353b",
+    chatInputBackground: "#383a40",
+    chatInputBorder: "#26272b",
 
-    // Skeleton loaders
-    skeletonBase: "#222226",
-    skeletonHighlight: "#2a2a2f",
+    // Sidebar
+    sidebarBackground: "#2b2d31",
+    sidebarHover: "#35373c",
+    sidebarActive: "#404249",
+    sidebarDivider: "#26272b",
+
+    // Modal
+    overlay: "rgba(0, 0, 0, 0.85)",
+    modalBackground: "#313338",
+    modalBorder: "#26272b",
+
+    // Orb
+    orbHue: 235,
+    orbIntensity: 0.35,
+    gradientFrom: "#5865F2",
+    gradientTo: "#7289da",
+
+    // Skeleton
+    skeletonBase: "#2b2d31",
+    skeletonHighlight: "#383a40",
+
+    // Mention
+    mentionBackground: "#5865F233",
+    mentionText: "#dee0fc",
+
+    // Status
+    statusOnline: "#23a55a",
+    statusIdle: "#f0b232",
+    statusDnd: "#f23f43",
+    statusOffline: "#80848e",
   },
 
   light: {
-    // Primary - Vibrant blue that works on light backgrounds
-    primary: "#4f46e5",
-    primaryHover: "#4338ca",
-    primaryActive: "#3730a3",
+    // Primary - Discord's blurple adjusted for light
+    primary: "#5865F2",
+    primaryHover: "#4752C4",
+    primaryActive: "#3C45A5",
+    primaryLight: "#5865F215",
 
-    // Secondary - Rich purple
+    // Secondary
     secondary: "#7c3aed",
     secondaryHover: "#6d28d9",
 
-    // Accent - Teal accent
-    accent: "#0891b2",
-    accentHover: "#0e7490",
+    // Accent
+    accent: "#0099dc",
+    accentHover: "#0087c4",
 
-    // Backgrounds - Clean, professional whites
+    // Backgrounds - Clean, modern whites
     background: "#ffffff",
-    backgroundSecondary: "#fafafa",
-    surface: "#f8f9fa",
-    surfaceHover: "#f1f3f5",
-    surfaceActive: "#e9ecef",
+    backgroundSecondary: "#f2f3f5",
+    backgroundTertiary: "#e3e5e8",
 
-    // Text - FIXED: High contrast for excellent readability
-    textPrimary: "#111827", // Deep gray-black for main text
-    textSecondary: "#374151", // Dark gray for secondary text
-    textTertiary: "#6b7280", // Medium gray for tertiary text
-    textMuted: "#9ca3af", // Light gray for muted text
+    // Surfaces
+    surface: "#f2f3f5",
+    surfaceHover: "#e3e5e8",
+    surfaceActive: "#d4d7dc",
+    surfaceElevated: "#ffffff",
 
-    // Borders - Visible but subtle
-    border: "#e5e7eb",
-    borderHover: "#d1d5db",
-    divider: "#f3f4f6",
+    // Text - WCAG AAA compliant contrast
+    textPrimary: "#060607",
+    textSecondary: "#4e5058",
+    textTertiary: "#5e6772",
+    textMuted: "#80848e",
+    textLink: "#0067b8",
 
-    // Status colors
-    success: "#059669",
-    warning: "#d97706",
-    error: "#dc2626",
-    info: "#2563eb",
+    // Borders - Visible but not harsh
+    border: "#d4d7dc",
+    borderHover: "#b5bac1",
+    borderStrong: "#9fa6b3",
+    divider: "#e3e5e8",
 
-    // Interactive states
-    hover: "rgba(0, 0, 0, 0.04)",
-    active: "rgba(0, 0, 0, 0.08)",
-    focus: "rgba(79, 70, 229, 0.2)",
+    // Status - Adjusted for light backgrounds
+    success: "#1f8b4c",
+    successLight: "#1f8b4c15",
+    warning: "#e8a723",
+    warningLight: "#e8a72315",
+    error: "#d93036",
+    errorLight: "#d9303615",
+    info: "#5865F2",
+    infoLight: "#5865F215",
 
-    // Chat-specific
-    chatBackground: "#fafafa",
-    chatBubbleOwn: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-    chatBubbleOther: "#ffffff",
+    // Interactive
+    hover: "#e3e5e8",
+    active: "#d4d7dc",
+    focus: "#5865F230",
+
+    // Chat
+    chatBackground: "#ffffff",
+    chatBubbleOwn: "linear-gradient(135deg, #5865F2 0%, #7289da 100%)",
+    chatBubbleOther: "#f2f3f5",
+    chatBubbleOtherHover: "#e3e5e8",
     chatInputBackground: "#ffffff",
+    chatInputBorder: "#d4d7dc",
 
-    // Orb - Subtle and elegant
-    orbHue: 240,
+    // Sidebar
+    sidebarBackground: "#f2f3f5",
+    sidebarHover: "#e3e5e8",
+    sidebarActive: "#d4d7dc",
+    sidebarDivider: "#d4d7dc",
+
+    // Modal
+    overlay: "rgba(0, 0, 0, 0.65)",
+    modalBackground: "#ffffff",
+    modalBorder: "#d4d7dc",
+
+    // Orb
+    orbHue: 235,
     orbIntensity: 0.25,
-    gradientFrom: "#4f46e5",
-    gradientTo: "#7c3aed",
+    gradientFrom: "#5865F2",
+    gradientTo: "#7289da",
 
-    // Skeleton loaders
-    skeletonBase: "#e5e7eb",
-    skeletonHighlight: "#f3f4f6",
+    // Skeleton
+    skeletonBase: "#e3e5e8",
+    skeletonHighlight: "#f2f3f5",
+
+    // Mention
+    mentionBackground: "#5865F215",
+    mentionText: "#3C45A5",
+
+    // Status
+    statusOnline: "#1f8b4c",
+    statusIdle: "#e8a723",
+    statusDnd: "#d93036",
+    statusOffline: "#80848e",
   },
 };
 
@@ -182,33 +306,31 @@ const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>("dark");
-  const [colors, setColors] = useState<ThemeColors>(themeConfigs.dark);
 
-  // Initialize theme from localStorage
+  // Memoize colors to prevent unnecessary recalculations
+  const colors = useMemo(() => themeConfigs[theme], [theme]);
+
+  // Initialize theme from localStorage or system preference
   useEffect(() => {
-    const storedTheme = localStorage.getItem("app-theme") as Theme | null;
+    const storedTheme = localStorage.getItem(
+      "discord-clone-theme"
+    ) as Theme | null;
     if (storedTheme && themeConfigs[storedTheme]) {
       setThemeState(storedTheme);
-      setColors(themeConfigs[storedTheme]);
     } else {
-      // Check system preference
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
-      const systemTheme = prefersDark ? "dark" : "light";
-      setThemeState(systemTheme);
-      setColors(themeConfigs[systemTheme]);
+      setThemeState(prefersDark ? "dark" : "light");
     }
   }, []);
 
   // Apply theme changes
   useEffect(() => {
-    const newColors = themeConfigs[theme];
-    setColors(newColors);
+    const root = document.documentElement;
 
     // Update CSS custom properties
-    const root = document.documentElement;
-    Object.entries(newColors).forEach(([key, value]) => {
+    Object.entries(colors).forEach(([key, value]) => {
       root.style.setProperty(`--theme-${key}`, String(value));
     });
 
@@ -216,14 +338,20 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     document.documentElement.classList.remove("light", "dark");
     document.documentElement.classList.add(theme);
 
-    // Update meta theme-color for mobile browsers
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute("content", newColors.background);
-    }
+    // Update background color
+    document.body.style.backgroundColor = colors.background;
 
-    localStorage.setItem("app-theme", theme);
-  }, [theme]);
+    // Update meta theme-color for mobile browsers
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement("meta");
+      metaThemeColor.setAttribute("name", "theme-color");
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.setAttribute("content", colors.background);
+
+    localStorage.setItem("discord-clone-theme", theme);
+  }, [theme, colors]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
@@ -233,10 +361,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  const value = useMemo(
+    () => ({ theme, colors, setTheme, toggleTheme }),
+    [theme, colors]
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, colors, setTheme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 };
 

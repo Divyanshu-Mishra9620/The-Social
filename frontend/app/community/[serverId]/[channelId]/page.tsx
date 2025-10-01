@@ -3,16 +3,16 @@
 import { CommunityView } from "@/components/community/subComponents/communityDetail/CommunityView";
 import { useCommunity } from "@/context/CommunityContext";
 import React from "react";
-import { CommunityViewSkeleton } from "@/components/Loaders";
+import { CommunityViewSkeleton, EmptyState } from "@/components/Loaders";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
 export default function ChannelPage({
   params,
 }: {
-  params: Promise<{ serverId: string; channelId: string }>;
+  params: { serverId: string; channelId: string };
 }) {
-  const { channelId } = React.use(params);
+  const { channelId } = params;
   const { server, isLoading } = useCommunity();
-  console.log("server", server, "isLoading", isLoading);
 
   if (isLoading) {
     return <CommunityViewSkeleton />;
@@ -20,11 +20,13 @@ export default function ChannelPage({
 
   if (!server) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
-        <p className="text-red-500">Could not load server details.</p>
-      </div>
+      <EmptyState
+        icon={<IconAlertTriangle size={48} className="text-red-500" />}
+        title="Error"
+        description="Could not load server details. It might not exist or you don't have permission to view it."
+      />
     );
   }
 
-  return <CommunityView community={server} initialChannelId={channelId} />;
+  return <CommunityView initialChannelId={channelId} />;
 }

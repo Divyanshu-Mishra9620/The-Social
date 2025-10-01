@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { IconHash, IconPaperclip, IconSend } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Channel, Server, Message } from "@/types/server";
@@ -15,7 +21,7 @@ type ClientMessage = Message & {
   status?: "sending" | "failed";
 };
 
-const SkeletonMessage = () => {
+const SkeletonMessage = React.memo(() => {
   const { colors } = useTheme();
   return (
     <div className="flex animate-pulse items-start gap-3">
@@ -35,9 +41,11 @@ const SkeletonMessage = () => {
       </div>
     </div>
   );
-};
+});
 
-const LoadingSkeleton = () => {
+SkeletonMessage.displayName = "SkeletonMessage";
+
+const LoadingSkeleton = React.memo(() => {
   const { colors } = useTheme();
   return (
     <div className="space-y-6 px-6 py-4">
@@ -72,75 +80,81 @@ const LoadingSkeleton = () => {
       <SkeletonMessage />
     </div>
   );
-};
+});
 
-const MessageBubble = ({
-  message,
-  isOwnMessage,
-}: {
-  message: ClientMessage;
-  isOwnMessage: boolean;
-}) => {
-  const { colors } = useTheme();
+LoadingSkeleton.displayName = "LoadingSkeleton";
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      layout
-      className={`flex items-start gap-3 ${
-        isOwnMessage ? "flex-row-reverse" : ""
-      }`}
-      style={{ opacity: message.status === "sending" ? 0.6 : 1 }}
-    >
-      <img
-        src={message.sender.profilePic || "/default-avatar.png"}
-        alt={message.sender.name}
-        className="h-9 w-9 rounded-full object-cover ring-2 ring-offset-2"
-        style={{
-          // @ts-ignore
-          ringColor: colors.border,
-          ringOffsetColor: colors.background,
-        }}
-      />
-      <div
-        className={`flex flex-col ${
-          isOwnMessage ? "items-end" : "items-start"
+const MessageBubble = React.memo(
+  ({
+    message,
+    isOwnMessage,
+  }: {
+    message: ClientMessage;
+    isOwnMessage: boolean;
+  }) => {
+    const { colors } = useTheme();
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        layout
+        className={`flex items-start gap-3 ${
+          isOwnMessage ? "flex-row-reverse" : ""
         }`}
+        style={{ opacity: message.status === "sending" ? 0.6 : 1 }}
       >
-        <div className="flex items-center gap-2 mb-1">
-          {!isOwnMessage && (
-            <span
-              className="text-sm font-semibold"
-              style={{ color: colors.textPrimary }}
-            >
-              {message.sender.name}
-            </span>
-          )}
-          <span className="text-xs" style={{ color: colors.textMuted }}>
-            {message.createdAt ? formatDate(message.createdAt) : "Sending..."}
-          </span>
-        </div>
+        <img
+          src={message.sender.profilePic || "/default-avatar.png"}
+          alt={message.sender.name}
+          className="h-9 w-9 rounded-full object-cover ring-2 ring-offset-2"
+          style={{
+            // @ts-ignore
+            ringColor: colors.border,
+            ringOffsetColor: colors.background,
+          }}
+        />
         <div
-          className={`mt-1 max-w-lg break-words rounded-xl px-4 py-2.5 text-sm shadow-sm ${
-            isOwnMessage ? "rounded-br-none text-white" : "rounded-bl-none"
+          className={`flex flex-col ${
+            isOwnMessage ? "items-end" : "items-start"
           }`}
-          style={
-            isOwnMessage
-              ? { background: colors.chatBubbleOwn }
-              : {
-                  backgroundColor: colors.chatBubbleOther,
-                  color: colors.textPrimary,
-                }
-          }
         >
-          <p>{message.content}</p>
+          <div className="flex items-center gap-2 mb-1">
+            {!isOwnMessage && (
+              <span
+                className="text-sm font-semibold"
+                style={{ color: colors.textPrimary }}
+              >
+                {message.sender.name}
+              </span>
+            )}
+            <span className="text-xs" style={{ color: colors.textMuted }}>
+              {message.createdAt ? formatDate(message.createdAt) : "Sending..."}
+            </span>
+          </div>
+          <div
+            className={`mt-1 max-w-lg break-words rounded-xl px-4 py-2.5 text-sm shadow-sm ${
+              isOwnMessage ? "rounded-br-none text-white" : "rounded-bl-none"
+            }`}
+            style={
+              isOwnMessage
+                ? { background: colors.chatBubbleOwn }
+                : {
+                    backgroundColor: colors.chatBubbleOther,
+                    color: colors.textPrimary,
+                  }
+            }
+          >
+            <p>{message.content}</p>
+          </div>
         </div>
-      </div>
-    </motion.div>
-  );
-};
+      </motion.div>
+    );
+  }
+);
+
+MessageBubble.displayName = "MessageBubble";
 
 export const ChatView = ({
   channel,
@@ -151,69 +165,54 @@ export const ChatView = ({
 }) => {
   const { data: session } = useSession();
   const { colors } = useTheme();
-  const { messages: initialMessages, isLoading } = useChannelMessages(
-    channel._id
-  );
-  const socket = useSocket(channel._id);
 
-  const [messages, setMessages] = useState<ClientMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const {
+    messages: serverMessages,
+    isLoading,
+    addMessage,
+  } = useChannelMessages(channel._id);
+
+  const socket = useSocket(channel._id);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setMessages([]);
-  }, [channel._id]);
+  const [optimisticMessages, setOptimisticMessages] = useState<ClientMessage[]>(
+    []
+  );
+  const [newMessage, setNewMessage] = useState("");
 
-  useEffect(() => {
-    if (initialMessages) {
-      const sortedMessages = [...initialMessages].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-      setMessages(sortedMessages);
-    }
-  }, [initialMessages]);
-
-  const handleNewMessage = useCallback((newMessage: Message) => {
-    setMessages((prevMessages) => {
-      const optimisticIndex = prevMessages.findIndex(
-        (msg) => msg.tempId && msg.content === newMessage.content
-      );
-
-      if (optimisticIndex > -1) {
-        const updatedMessages = [...prevMessages];
-        updatedMessages[optimisticIndex] = newMessage;
-        return updatedMessages;
-      }
-
-      if (prevMessages.some((msg) => msg._id === newMessage._id)) {
-        return prevMessages;
-      }
-
-      return [...prevMessages, newMessage];
-    });
-  }, []);
+  const allMessages = useMemo(() => {
+    const combined = [...serverMessages, ...optimisticMessages];
+    return combined.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }, [serverMessages, optimisticMessages]);
 
   useEffect(() => {
     if (!socket) return;
+
+    const handleNewMessage = (newMessage: Message) => {
+      addMessage(newMessage);
+    };
 
     socket.on("message", handleNewMessage);
 
     return () => {
       socket.off("message", handleNewMessage);
     };
-  }, [socket, handleNewMessage]);
+  }, [socket, addMessage]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [allMessages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !session?.appJwt) return;
 
-    const tempId = Date.now().toString();
+    const tempId = `temp-${Date.now()}`;
     const contentToSend = newMessage;
+    setNewMessage("");
 
     const optimisticMessage: ClientMessage = {
       _id: tempId,
@@ -230,28 +229,37 @@ export const ChatView = ({
       status: "sending",
     };
 
-    setMessages((prev) => [...prev, optimisticMessage]);
-    setNewMessage("");
+    setOptimisticMessages((prev) => [...prev, optimisticMessage]);
 
     try {
-      const formData = new FormData();
-      formData.append("content", contentToSend);
-      formData.append("serverId", server._id);
-
-      await apiClient(
+      const sentMessage: Message = await apiClient(
         `${process.env.NEXT_PUBLIC_BACKEND_URI}/api/v1/message/create-message/${channel._id}`,
         session.appJwt,
-        { method: "POST", body: formData }
+        {
+          method: "POST",
+          body: new URLSearchParams({
+            content: contentToSend,
+            serverId: server._id,
+          }),
+        }
+      );
+
+      addMessage(sentMessage);
+
+      setOptimisticMessages((prev) =>
+        prev.filter((msg) => msg.tempId !== tempId)
       );
     } catch (error) {
       console.error("Failed to send message:", error);
-      setMessages((prev) =>
+      setOptimisticMessages((prev) =>
         prev.map((msg) =>
           msg.tempId === tempId ? { ...msg, status: "failed" } : msg
         )
       );
     }
   };
+
+  const showWelcome = allMessages.length === 0 && !isLoading;
 
   return (
     <div
@@ -265,40 +273,42 @@ export const ChatView = ({
           msOverflowStyle: "none",
         }}
       >
-        {isLoading && messages.length === 0 ? (
+        {isLoading && allMessages.length === 0 ? (
           <LoadingSkeleton />
         ) : (
           <div className="space-y-6 px-6 py-4">
-            <div className="text-center">
-              <div
-                className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: colors.surface,
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: colors.border,
-                }}
-              >
-                <IconHash size={32} style={{ color: colors.textTertiary }} />
+            {showWelcome && (
+              <div className="text-center">
+                <div
+                  className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: "1px",
+                    borderStyle: "solid",
+                    borderColor: colors.border,
+                  }}
+                >
+                  <IconHash size={32} style={{ color: colors.textTertiary }} />
+                </div>
+                <h2
+                  className="mt-4 text-2xl font-bold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  Welcome to #{channel.name}!
+                </h2>
+                <p
+                  className="mt-1 text-sm"
+                  style={{ color: colors.textTertiary }}
+                >
+                  This is the beginning of this channel.
+                </p>
               </div>
-              <h2
-                className="mt-4 text-2xl font-bold"
-                style={{ color: colors.textPrimary }}
-              >
-                Welcome to #{channel.name}!
-              </h2>
-              <p
-                className="mt-1 text-sm"
-                style={{ color: colors.textTertiary }}
-              >
-                This is the beginning of this channel.
-              </p>
-            </div>
+            )}
 
             <AnimatePresence initial={false}>
-              {messages.map((message) => (
+              {allMessages.map((message) => (
                 <MessageBubble
-                  key={message._id}
+                  key={(message as ClientMessage).tempId || message._id}
                   message={message}
                   isOwnMessage={message.sender._id === session?.user?.id}
                 />

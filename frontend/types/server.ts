@@ -20,12 +20,6 @@ interface PopulatedUser {
   profilePic: string;
 }
 
-interface ServerMember {
-  user: string | PopulatedUser;
-  roles: string[];
-  _id: string;
-}
-
 export interface Server {
   _id: string;
   name: string;
@@ -33,7 +27,7 @@ export interface Server {
   imageUrl: string;
   owner: PopulatedUser;
   visibility: "public" | "private" | "invite-only";
-  members: ServerMember[];
+  members: User[];
   categories: Category[];
   createdAt: string;
   updatedAt: string;
@@ -48,4 +42,44 @@ export interface Message {
   attachments?: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface User {
+  user: {
+    _id: string;
+    name: string;
+    profilePic: string;
+  };
+  _id: string;
+  name: string;
+  username: string;
+  email: string;
+  profilePic?: string;
+  banner?: string;
+  bio?: string;
+  status: "online" | "idle" | "dnd" | "offline";
+  customStatus?: string;
+  joinedAt: string;
+  roles?: string[];
+  badges?: string[];
+}
+
+export interface DirectMessage {
+  _id: string;
+  participants: User[];
+  lastMessage?: {
+    content: string;
+    timestamp: string;
+    sender: string;
+  };
+  unreadCount: number;
+}
+
+export interface VoiceParticipant {
+  _id: string;
+  name: string;
+  profilePic?: string;
+  isMuted: boolean;
+  isDeafened: boolean;
+  isSpeaking: boolean;
 }
